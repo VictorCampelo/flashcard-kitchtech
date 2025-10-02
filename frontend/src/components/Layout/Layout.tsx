@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp, ViewType } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext';
 import { Sidebar } from '../Sidebar/Sidebar';
 import { BottomBar } from '../BottomBar/BottomBar';
 import './Layout.css';
