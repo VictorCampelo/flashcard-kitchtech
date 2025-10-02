@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     netcat-traditional \
+    default-mysql-client \
     && docker-php-ext-install pdo_mysql mysqli \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
