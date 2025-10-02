@@ -1,0 +1,139 @@
+.flashcard-wrapper {
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem;
+}
+
+.flashcard-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  perspective: 1000px;
+  cursor: pointer;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flashcard-container.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+  background: #f8f9fa;
+}
+
+.flashcard-content h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.flashcard-content p {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #555;
+  word-wrap: break-word;
+}
+
+.flashcard-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #999;
+  font-style: italic;
+}
+
+.flashcard-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-edit {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #45a049;
+}
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #da190b;
+}
+
+.flashcard-metadata {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+}
+
+.flashcard-metadata small {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flashcard-wrapper {
+    margin: 0.5rem;
+  }
+
+  .flashcard-container {
+    height: 200px;
+  }
+
+  .flashcard-front,
+  .flashcard-back {
+    padding: 1.5rem;
+  }
+
+  .flashcard-content h3 {
+    font-size: 1rem;
+  }
+
+  .flashcard-content p {
+    font-size: 0.95rem;
+  }
+}
