@@ -94,7 +94,7 @@ export const Study: React.FC = () => {
     setStudyComplete(false);
   };
 
-  if (studyComplete || flashcards.length === 0) {
+  if (!loading && (studyComplete || flashcards.length === 0)) {
     return (
       <Layout flashcardsCount={flashcards.length} title="Study Mode">
         <div className="study-page" data-testid="study-page">
