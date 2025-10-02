@@ -120,7 +120,7 @@ export const Home: React.FC = () => {
     >
       <div className="home-page" data-testid="home-page">
         <header className="page-header">
-          <h1>🎴 Aloo App</h1>
+          <h1>🎴 Flashcard App</h1>
           <p>Master your knowledge with spaced repetition</p>
         </header>
 

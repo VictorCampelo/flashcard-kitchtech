@@ -221,7 +221,7 @@ describe("Home", () => {
       render(<Home />);
 
       expect(screen.getByTestId('home-page')).toBeInTheDocument();
-      expect(screen.getByText('🎴 Aloo App')).toBeInTheDocument();
+      expect(screen.getByText('🎴 Flashcard App')).toBeInTheDocument();
       expect(
         screen.getByText('Master your knowledge with spaced repetition')
       ).toBeInTheDocument();

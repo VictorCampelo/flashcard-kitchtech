@@ -21,7 +21,7 @@ test.describe('Home Page', () => {
     
     // Wait for the home page to be fully rendered
     await expect(page.getByTestId('home-page')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('🎴 Aloo App')).toBeVisible();
+    await expect(page.getByText('🎴 Flashcard App')).toBeVisible();
     await expect(page.getByText('Master your knowledge with spaced repetition')).toBeVisible();
   });
 
