@@ -15,6 +15,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true,
+    cors: true,
     watch: {
       usePolling: true,
     },
