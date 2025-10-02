@@ -1,0 +1,27 @@
+# Dependencies
+/vendor/
+
+# Environment
+.env
+
+# Database
+/database/*.db
+/database/*.db-*
+
+# Testing
+.phpunit.cache/
+coverage/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

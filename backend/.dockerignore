@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+
+# Dependencies (will be installed in container)
+vendor/
+node_modules/
+
+# Tests
+tests/
+.phpunit.cache/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# Documentation
+*.md
+!README.md
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
