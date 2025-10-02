@@ -34,9 +34,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy scripts
-COPY scripts/ /usr/local/bin/scripts/
-RUN chmod +x /usr/local/bin/scripts/*.sh
+# Copy scripts directly to /usr/local/bin
+COPY scripts/*.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/*.sh
 
 # Copy composer files first for better caching
 COPY composer.json composer.lock* /var/www/html/
@@ -55,5 +55,5 @@ RUN chown -R www-data:www-data /var/www/html \
 EXPOSE 80
 
 # Start with entrypoint to run migrations
-ENTRYPOINT ["/usr/local/bin/scripts/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["apache2-foreground"]

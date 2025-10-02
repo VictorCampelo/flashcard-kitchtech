@@ -14,7 +14,7 @@ if [ ! -d "vendor" ] || [ ! -f "vendor/autoload.php" ]; then
 fi
 
 # Use wait-for-mysql script
-/usr/local/bin/scripts/wait-for-mysql.sh "$DB_HOST" "$DB_USER" "$DB_PASSWORD" echo "MySQL ready"
+/usr/local/bin/wait-for-mysql.sh "$DB_HOST" "$DB_USER" "$DB_PASSWORD" echo "MySQL ready"
 
 echo "Running migrations..."
 
