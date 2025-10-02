@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components';
-import { Home } from './pages';
+import { Home, Study, Kanban } from './pages';
 import './App.css';
 
 /**
@@ -14,6 +14,8 @@ function App() {
         <div className="app">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/study" element={<Study />} />
+            <Route path="/kanban" element={<Kanban />} />
           </Routes>
         </div>
       </Router>

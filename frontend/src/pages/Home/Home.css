@@ -68,6 +68,32 @@
   background: #f5f5f5;
 }
 
+.btn-study {
+  background: #2196F3;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-study:hover {
+  background: #1976D2;
+}
+
+.btn-kanban {
+  background: #FF9800;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-kanban:hover {
+  background: #F57C00;
+}
+
 .btn-primary-large {
   padding: 1rem 2rem;
   font-size: 1.1rem;

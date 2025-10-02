@@ -87,6 +87,12 @@ export const Home: React.FC = () => {
         >
           + New Flashcard
         </button>
+        <a href="/study" className="btn btn-study">
+          📚 Study Mode
+        </a>
+        <a href="/kanban" className="btn btn-kanban">
+          📊 Kanban Board
+        </a>
         <button
           onClick={loadFlashcards}
           className="btn btn-refresh"

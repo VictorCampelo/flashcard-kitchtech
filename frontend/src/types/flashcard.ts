@@ -2,10 +2,15 @@
  * Flashcard Type Definitions
  */
 
+export type DifficultyLevel = 'not_studied' | 'easy' | 'medium' | 'hard';
+
 export interface Flashcard {
   id: number;
   front: string;
   back: string;
+  difficulty: DifficultyLevel;
+  study_count: number;
+  last_studied_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,4 +41,18 @@ export interface ErrorResponse {
   success: false;
   error: string;
   errors?: Record<string, string>;
+}
+
+export interface StudyStats {
+  total: number;
+  not_studied: number;
+  easy: number;
+  medium: number;
+  hard: number;
+  total_studies: number;
+  avg_studies_per_card: number;
+}
+
+export interface UpdateDifficultyDTO {
+  difficulty: DifficultyLevel;
 }
