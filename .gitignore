@@ -1,0 +1,17 @@
+# Root level gitignore
+# Each subfolder (backend, frontend) has its own .gitignore
+
+# IDEs (global)
+.idea/
+.vscode/
+
+# OS (global)
+.DS_Store
+Thumbs.db
+
+# Logs (global)
+*.log
+
+.windsurf/
+
+docs/
