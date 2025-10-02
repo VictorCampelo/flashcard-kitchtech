@@ -1,17 +1,17 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from "react";
 import {
   FlashcardCard,
   FlashcardForm,
   Loading,
   EmptyState,
-  Modal,
+  ConfirmModal,
   Layout,
-} from '../../components';
-import { useFlashcards, useToggle } from '../../hooks';
-import { useApp } from '../../contexts/AppContext';
-import { EMPTY_STATE, ERROR_MESSAGES } from '../../constants';
-import type { Flashcard, CreateFlashcardDTO } from '../../types/flashcard';
-import './Home.css';
+} from "../../components";
+import { CreateFlashcardModal as Modal } from "../../components/Modals/CreateFlashcardModal/CreateFlashcardModal";
+import { EMPTY_STATE, ERROR_MESSAGES } from "../../constants";
+import type { Flashcard, CreateFlashcardDTO } from "../../types/flashcard";
+import "./Home.css";
+import { useFlashcards, useToggle } from "../../hooks";
 
 /**
  * Home Page Component
@@ -30,44 +30,77 @@ export const Home: React.FC = () => {
   } = useFlashcards();
 
   const [showForm, , setShowForm] = useToggle(false);
-  const [editingFlashcard, setEditingFlashcard] = React.useState<Flashcard | null>(null);
-
-  const { currentView } = useApp();
+  const [editingFlashcard, setEditingFlashcard] =
+    React.useState<Flashcard | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{
+    show: boolean;
+    flashcardId: number | null;
+  }>({ show: false, flashcardId: null });
 
   useEffect(() => {
-    if (currentView === 'home') {
-      loadFlashcards();
-    }
-  }, [currentView, loadFlashcards]);
+    loadFlashcards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleCreate = useCallback(async (data: CreateFlashcardDTO) => {
-    try {
-      await createFlashcard(data);
+  const handleCreate = useCallback(
+    async (data: CreateFlashcardDTO) => {
+      try {
+        await createFlashcard(data);
+        setShowForm(false);
+      } catch (err) {
+        throw new Error(ERROR_MESSAGES.CREATE_FAILED);
+      }
+    },
+    [createFlashcard, setShowForm]
+  );
+
+  const handleUpdate = useCallback(
+    async (data: CreateFlashcardDTO) => {
+      if (!editingFlashcard) return;
+
+      try {
+        await updateFlashcard(editingFlashcard.id, data);
+        setEditingFlashcard(null);
+      } catch (err) {
+        throw new Error(ERROR_MESSAGES.UPDATE_FAILED);
+      }
+    },
+    [editingFlashcard, updateFlashcard]
+  );
+
+  const handleDelete = useCallback(
+    (id: number) => {
+      setDeleteConfirm({ show: true, flashcardId: id });
+    },
+    []
+  );
+
+  const confirmDelete = useCallback(async () => {
+    const idToDelete = deleteConfirm.flashcardId;
+    console.log('[HOME] confirmDelete called for ID:', idToDelete);
+    
+    // Close modal first
+    setDeleteConfirm({ show: false, flashcardId: null });
+    
+    // Then execute delete
+    if (idToDelete) {
+      console.log('[HOME] Calling deleteFlashcard for ID:', idToDelete);
+      await deleteFlashcard(idToDelete);
+      console.log('[HOME] Delete completed');
+    }
+  }, [deleteConfirm.flashcardId, deleteFlashcard]);
+
+  const cancelDelete = useCallback(() => {
+    setDeleteConfirm({ show: false, flashcardId: null });
+  }, []);
+
+  const handleEdit = useCallback(
+    (flashcard: Flashcard) => {
+      setEditingFlashcard(flashcard);
       setShowForm(false);
-    } catch (err) {
-      throw new Error(ERROR_MESSAGES.CREATE_FAILED);
-    }
-  }, [createFlashcard, setShowForm]);
-
-  const handleUpdate = useCallback(async (data: CreateFlashcardDTO) => {
-    if (!editingFlashcard) return;
-
-    try {
-      await updateFlashcard(editingFlashcard.id, data);
-      setEditingFlashcard(null);
-    } catch (err) {
-      throw new Error(ERROR_MESSAGES.UPDATE_FAILED);
-    }
-  }, [editingFlashcard, updateFlashcard]);
-
-  const handleDelete = useCallback(async (id: number) => {
-    await deleteFlashcard(id);
-  }, [deleteFlashcard]);
-
-  const handleEdit = useCallback((flashcard: Flashcard) => {
-    setEditingFlashcard(flashcard);
-    setShowForm(false);
-  }, [setShowForm]);
+    },
+    [setShowForm]
+  );
 
   const handleCancelForm = useCallback(() => {
     setShowForm(false);
@@ -121,7 +154,7 @@ export const Home: React.FC = () => {
         <Modal
           isOpen={showForm || !!editingFlashcard}
           onClose={handleCancelForm}
-          title={editingFlashcard ? 'Edit Flashcard' : 'Create New Flashcard'}
+          title={editingFlashcard ? "Edit Flashcard" : "Create New Flashcard"}
         >
           <FlashcardForm
             flashcard={editingFlashcard || undefined}
@@ -129,6 +162,17 @@ export const Home: React.FC = () => {
             onCancel={handleCancelForm}
           />
         </Modal>
+
+        <ConfirmModal
+          isOpen={deleteConfirm.show}
+          title="Delete Flashcard"
+          message="Are you sure you want to delete this flashcard? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
 
         <div className="home-content">
           {loading ? (

@@ -39,9 +39,7 @@ export const FlashcardCard: React.FC<FlashcardCardProps> = React.memo(({
   // because it's used as an event handler and we don't want it to be recreated on every render
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this flashcard?')) {
-      onDelete(flashcard.id);
-    }
+    onDelete(flashcard.id);
   }, [flashcard.id, onDelete]);
 
   return (

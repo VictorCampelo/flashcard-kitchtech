@@ -74,7 +74,7 @@ describe('FlashcardCard', () => {
     expect(mockOnEdit).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onDelete when delete button is clicked and confirmed', () => {
+  it('calls onDelete when delete button is clicked', () => {
     render(
       <FlashcardCard
         flashcard={mockFlashcard}
@@ -86,26 +86,8 @@ describe('FlashcardCard', () => {
     const deleteButton = screen.getByTestId('delete-button');
     fireEvent.click(deleteButton);
 
-    expect(global.confirm).toHaveBeenCalled();
+    // Now onDelete is called directly without window.confirm
     expect(mockOnDelete).toHaveBeenCalledWith(1);
-  });
-
-  it('does not call onDelete when deletion is cancelled', () => {
-    global.confirm = vi.fn(() => false);
-
-    render(
-      <FlashcardCard
-        flashcard={mockFlashcard}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    const deleteButton = screen.getByTestId('delete-button');
-    fireEvent.click(deleteButton);
-
-    expect(global.confirm).toHaveBeenCalled();
-    expect(mockOnDelete).not.toHaveBeenCalled();
   });
 
   it('displays flashcard metadata correctly', () => {

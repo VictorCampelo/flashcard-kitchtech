@@ -1,7 +1,5 @@
 <?php
 
-use PDO;
-
 /**
  * Add Study Fields to Flashcards Table Migration
  * 
@@ -12,7 +10,7 @@ class AddStudyFieldsToFlashcards
     /**
      * Run the migration
      */
-    public function up(PDO $db): void
+    public function up(\PDO $db): void
     {
         $sql = "
             ALTER TABLE flashcards
@@ -29,7 +27,7 @@ class AddStudyFieldsToFlashcards
     /**
      * Reverse the migration
      */
-    public function down(PDO $db): void
+    public function down(\PDO $db): void
     {
         $sql = "
             ALTER TABLE flashcards

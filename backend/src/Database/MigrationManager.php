@@ -58,20 +58,15 @@ class MigrationManager
         
         foreach ($migrations as $migration) {
             try {
-                $this->db->beginTransaction();
-                
+                // Note: DDL statements (CREATE, ALTER, DROP) cause implicit commits in MySQL
+                // so we don't wrap them in transactions
                 $instance = $this->loadMigration($migration);
                 $instance->up($this->db);
                 
                 $this->recordMigration($migration, $batch);
-                
-                $this->db->commit();
                 $executed[] = $migration;
                 
             } catch (Exception $e) {
-                if ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
                 throw new Exception("Migration failed: {$migration} - " . $e->getMessage());
             }
         }
@@ -95,20 +90,14 @@ class MigrationManager
             
             foreach (array_reverse($migrations) as $migration) {
                 try {
-                    $this->db->beginTransaction();
-                    
+                    // Note: DDL statements cause implicit commits, no transaction needed
                     $instance = $this->loadMigration($migration['migration']);
                     $instance->down($this->db);
                     
                     $this->removeMigration($migration['migration']);
-                    
-                    $this->db->commit();
                     $rolledBack[] = $migration['migration'];
                     
                 } catch (Exception $e) {
-                    if ($this->db->inTransaction()) {
-                        $this->db->rollBack();
-                    }
                     throw new Exception("Rollback failed: {$migration['migration']} - " . $e->getMessage());
                 }
             }
@@ -127,18 +116,14 @@ class MigrationManager
         
         foreach (array_reverse($allMigrations) as $migration) {
             try {
-                $this->db->beginTransaction();
-                
+                // Note: DDL statements cause implicit commits, no transaction needed
                 $instance = $this->loadMigration($migration['migration']);
                 $instance->down($this->db);
                 
                 $this->removeMigration($migration['migration']);
-                
-                $this->db->commit();
                 $rolledBack[] = $migration['migration'];
                 
             } catch (Exception $e) {
-                $this->db->rollBack();
                 throw new Exception("Reset failed: {$migration['migration']} - " . $e->getMessage());
             }
         }

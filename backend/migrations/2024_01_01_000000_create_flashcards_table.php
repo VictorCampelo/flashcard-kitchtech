@@ -1,7 +1,5 @@
 <?php
 
-use PDO;
-
 /**
  * Create Flashcards Table Migration
  */
@@ -10,7 +8,7 @@ class CreateFlashcardsTable
     /**
      * Run the migration
      */
-    public function up(PDO $db): void
+    public function up(\PDO $db): void
     {
         $sql = "
             CREATE TABLE IF NOT EXISTS flashcards (
@@ -29,7 +27,7 @@ class CreateFlashcardsTable
     /**
      * Reverse the migration
      */
-    public function down(PDO $db): void
+    public function down(\PDO $db): void
     {
         $db->exec("DROP TABLE IF EXISTS flashcards");
     }
