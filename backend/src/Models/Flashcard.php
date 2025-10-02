@@ -4,123 +4,102 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Database\Database;
-use PDO;
-
 /**
- * Flashcard Model
+ * Flashcard Domain Entity
  * 
- * Handles CRUD operations for flashcards
+ * Represents a flashcard in the domain model.
+ * Immutable value object with typed properties.
  */
 class Flashcard
 {
-    private PDO $db;
+    public function __construct(
+        public readonly int $id,
+        public readonly string $front,
+        public readonly string $back,
+        public readonly string $difficulty,
+        public readonly int $study_count,
+        public readonly ?string $last_studied_at,
+        public readonly string $created_at,
+        public readonly string $updated_at
+    ) {}
     
-    public function __construct()
+    /**
+     * Create Flashcard from database array
+     */
+    public static function fromArray(array $data): self
     {
-        $this->db = Database::getConnection();
+        return new self(
+            id: (int) $data['id'],
+            front: $data['front'],
+            back: $data['back'],
+            difficulty: $data['difficulty'] ?? 'not_studied',
+            study_count: (int) ($data['study_count'] ?? 0),
+            last_studied_at: $data['last_studied_at'] ?? null,
+            created_at: $data['created_at'],
+            updated_at: $data['updated_at']
+        );
     }
     
     /**
-     * Get all flashcards
+     * Convert Flashcard to array (for JSON serialization)
      */
-    public function findAll(): array
+    public function toArray(): array
     {
-        $stmt = $this->db->query("
-            SELECT id, front, back, created_at, updated_at 
-            FROM flashcards 
-            ORDER BY created_at DESC, id DESC
-        ");
-        
-        return $stmt->fetchAll();
+        return [
+            'id' => $this->id,
+            'front' => $this->front,
+            'back' => $this->back,
+            'difficulty' => $this->difficulty,
+            'study_count' => $this->study_count,
+            'last_studied_at' => $this->last_studied_at,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
     
     /**
-     * Find flashcard by ID
+     * Check if flashcard has been studied
      */
-    public function findById(int $id): ?array
+    public function isStudied(): bool
     {
-        $stmt = $this->db->prepare("
-            SELECT id, front, back, created_at, updated_at 
-            FROM flashcards 
-            WHERE id = :id
-        ");
-        
-        $stmt->execute(['id' => $id]);
-        $result = $stmt->fetch();
-        
-        return $result ?: null;
+        return $this->difficulty !== 'not_studied';
     }
     
     /**
-     * Create new flashcard
+     * Check if flashcard is easy
      */
-    public function create(array $data): array
+    public function isEasy(): bool
     {
-        $stmt = $this->db->prepare("
-            INSERT INTO flashcards (front, back) 
-            VALUES (:front, :back)
-        ");
-        
-        $stmt->execute([
-            'front' => $data['front'],
-            'back' => $data['back']
-        ]);
-        
-        $id = (int) $this->db->lastInsertId();
-        
-        return $this->findById($id);
+        return $this->difficulty === 'easy';
     }
     
     /**
-     * Update existing flashcard
+     * Check if flashcard is hard
      */
-    public function update(int $id, array $data): ?array
+    public function isHard(): bool
     {
-        // Check if flashcard exists
-        if (!$this->findById($id)) {
-            return null;
-        }
-        
-        $stmt = $this->db->prepare("
-            UPDATE flashcards 
-            SET front = :front, back = :back
-            WHERE id = :id
-        ");
-        
-        $stmt->execute([
-            'id' => $id,
-            'front' => $data['front'],
-            'back' => $data['back']
-        ]);
-        
-        return $this->findById($id);
+        return $this->difficulty === 'hard';
     }
     
     /**
-     * Delete flashcard
+     * Get difficulty level as emoji
      */
-    public function delete(int $id): bool
+    public function getDifficultyEmoji(): string
     {
-        // Check if flashcard exists
-        if (!$this->findById($id)) {
-            return false;
-        }
-        
-        $stmt = $this->db->prepare("DELETE FROM flashcards WHERE id = :id");
-        $stmt->execute(['id' => $id]);
-        
-        return true;
+        return match($this->difficulty) {
+            'not_studied' => '📝',
+            'easy' => '😊',
+            'medium' => '🤔',
+            'hard' => '😰',
+            default => '❓'
+        };
     }
     
     /**
-     * Count total flashcards
+     * Check if needs review (not studied or hard)
      */
-    public function count(): int
+    public function needsReview(): bool
     {
-        $stmt = $this->db->query("SELECT COUNT(*) as total FROM flashcards");
-        $result = $stmt->fetch();
-        
-        return (int) $result['total'];
+        return $this->difficulty === 'not_studied' || $this->difficulty === 'hard';
     }
 }

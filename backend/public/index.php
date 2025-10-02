@@ -36,8 +36,8 @@ $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $corsOrigin = in_array($requestOrigin, $allowedOrigins) ? $requestOrigin : $allowedOrigins[0];
 
 header("Access-Control-Allow-Origin: {$corsOrigin}");
-header("Access-Control-Allow-Methods: " . Environment::get('CORS_METHODS', 'GET,POST,PUT,DELETE,OPTIONS'));
-header("Access-Control-Allow-Headers: " . Environment::get('CORS_HEADERS', 'Content-Type,Authorization'));
+header("Access-Control-Allow-Methods: " . 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+header("Access-Control-Allow-Headers: " . 'Content-Type,Authorization');
 header("Access-Control-Max-Age: 3600");
 
 // Handle preflight requests

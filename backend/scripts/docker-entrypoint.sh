@@ -18,10 +18,19 @@ fi
 
 echo "Running migrations..."
 
-# Run migrations
-php /var/www/html/src/Database/migrate.php
+# Run migrations using the migration manager
+php /var/www/html/src/Database/migrate.php up
 
-echo "✅ Migrations completed - starting Apache"
+echo "✅ Migrations completed"
+
+# Run seeders (only if SEED_DATABASE is set to true)
+if [ "${SEED_DATABASE:-false}" = "true" ]; then
+    echo "Running seeders..."
+    php /var/www/html/src/Database/seed.php
+    echo "✅ Seeders completed"
+fi
+
+echo "🚀 Starting Apache"
 
 # Execute the main container command
 exec "$@"

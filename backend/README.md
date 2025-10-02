@@ -2,7 +2,7 @@
 
 **Author:** Victor Campelo  
 **Email:** victor_campelo@outlook.com  
-**Date:** 2025-10-01
+**Last Updated:** 2025-10-02
 
 Pure PHP REST API for flashcard management with MySQL.
 
@@ -12,12 +12,14 @@ Pure PHP REST API for flashcard management with MySQL.
 
 1. [Quick Start](#-quick-start)
 2. [Project Structure](#-project-structure)
-3. [Architecture Decisions](#-architecture-decisions)
-4. [Docker Commands](#-useful-docker-commands)
-5. [Testing](#-testing)
-6. [Vendor Directory](#-vendor-directory)
-7. [Environment Variables](#-environment-variables)
-8. [API Endpoints](#-api-endpoints)
+3. [Migration System](#-migration-system)
+4. [Database Seeding](#-database-seeding)
+5. [Architecture Decisions](#-architecture-decisions)
+6. [Docker Commands](#-useful-docker-commands)
+7. [Testing](#-testing)
+8. [Vendor Directory](#-vendor-directory)
+9. [Environment Variables](#-environment-variables)
+10. [API Endpoints](#-api-endpoints)
 
 ---
 
@@ -44,6 +46,7 @@ docker-compose up --build
 - ✅ Backend waits for MySQL using `wait-for-mysql.sh`
 - ✅ Composer installs dependencies (`vendor/`)
 - ✅ Migrations run automatically
+- ✅ Seeders populate database with sample data
 - ✅ Apache starts on port 8000
 
 ### Local Development (Without Docker)
@@ -63,11 +66,160 @@ Copy-Item .env.example .env
 # DB_PASSWORD=your_password
 
 # 4. Run migrations
-php src/Database/migrate.php
+php migrate up
 
 # 5. Start server
 php -S localhost:8000 -t public
 ```
+
+---
+
+## 🔄 Migration System
+
+### Overview
+
+The flashcard app now includes a **professional migration system** with version control, history tracking, and rollback support.
+
+### Quick Commands
+
+```powershell
+# Run all pending migrations
+php migrate up
+
+# Check migration status
+php migrate status
+
+# Rollback last batch
+php migrate down
+
+# Rollback 2 batches
+php migrate down 2
+
+# Reset all migrations (requires --force)
+php migrate reset --force
+```
+
+### Migration Files
+
+Migrations are stored in `backend/migrations/`:
+
+```
+migrations/
+├── 2024_01_01_000000_create_flashcards_table.php
+└── 2025_10_02_000000_add_study_fields_to_flashcards.php
+```
+
+### Creating New Migrations
+
+**File naming:** `YYYY_MM_DD_HHMMSS_description.php`
+
+**Template:**
+```php
+<?php
+
+use PDO;
+
+class YourMigrationName
+{
+    public function up(PDO $db): void
+    {
+        // Forward migration
+        $sql = "ALTER TABLE flashcards ADD COLUMN new_field VARCHAR(255)";
+        $db->exec($sql);
+    }
+    
+    public function down(PDO $db): void
+    {
+        // Rollback migration
+        $sql = "ALTER TABLE flashcards DROP COLUMN new_field";
+        $db->exec($sql);
+    }
+}
+```
+
+### Migration Features
+
+- ✅ **Version Control** - Track all schema changes
+- ✅ **Batch System** - Organized rollbacks
+- ✅ **History Tracking** - `migrations` table stores execution history
+- ✅ **Transactions** - Safe, atomic migrations
+- ✅ **Status Checking** - See pending/executed migrations
+- ✅ **Rollback Support** - Undo migrations safely
+
+**Migration Manager Features:**
+- Automatic class name detection from filenames
+- Supports timestamps with time component (YYYY_MM_DD_HHMMSS)
+- Transaction safety with rollback on errors
+- Batch tracking for organized rollbacks
+
+---
+
+## 🌱 Database Seeding
+
+### Overview
+
+The seeding system populates the database with sample data for development and testing.
+
+### Quick Commands
+
+```powershell
+# Run all seeders
+php src/Database/seed.php
+
+# Fresh seed (truncate tables first)
+php src/Database/seed.php --fresh
+
+# Docker: Run seeders in container
+docker-compose exec backend php src/Database/seed.php
+```
+
+### Automatic Seeding
+
+Seeders run automatically on container startup if `SEED_DATABASE=true` in docker-compose.yml (default).
+
+To disable automatic seeding:
+```yaml
+environment:
+  - SEED_DATABASE=false
+```
+
+### Seeder Files
+
+Seeders are stored in `backend/seeders/`:
+
+```
+seeders/
+└── FlashcardSeeder.php  # Sample flashcard data
+```
+
+### Creating New Seeders
+
+**File naming:** `YourSeederName.php`
+
+**Template:**
+```php
+<?php
+
+return new class {
+    public function run(PDO $db): void
+    {
+        $stmt = $db->prepare("INSERT INTO table_name (column) VALUES (:value)");
+        $stmt->execute(['value' => 'data']);
+        
+        echo "   ✓ Inserted X records\n";
+    }
+};
+```
+
+### Sample Data Included
+
+The `FlashcardSeeder` includes 16 flashcards covering:
+- Programming concepts (closures, REST, dependency injection)
+- Database concepts (primary keys, normalization, JOINs)
+- Web development (CORS, authentication, JWT)
+- Docker & DevOps
+- Git & version control
+- Testing (unit testing, TDD)
 
 ---
 
@@ -99,23 +251,36 @@ backend/
 │   │
 │   ├── Controllers/            # API endpoints
 │   │   ├── BaseController.php  # Base controller (JSON response)
-│   │   └── FlashcardController.php
+│   │   └── FlashcardController.php # Flashcard CRUD + Study Mode
 │   │
 │   ├── Core/                   # Application core
 │   │   └── Router.php          # Routing system
 │   │
 │   ├── Database/               # Connection and migrations
 │   │   ├── Database.php        # PDO Singleton
-│   │   └── migrate.php         # Migration script
+│   │   ├── MigrationManager.php # Migration system
+│   │   ├── SeederManager.php   # Seeder system
+│   │   ├── migrate.php         # Migration CLI tool
+│   │   └── seed.php            # Seeder CLI tool
 │   │
 │   ├── Helpers/                # Helper functions
 │   │   └── functions.php       # Global helpers
 │   │
 │   ├── Models/                 # Data logic
-│   │   └── Flashcard.php       # Flashcard model
+│   │   └── Flashcard.php       # Flashcard model (with study features)
 │   │
 │   └── Routes/                 # Route definitions
-│       └── api.php             # API routes
+│       ├── api.php             # Main API routes
+│       └── flashcardRoutes.php # Flashcard resource routes
+│
+├── migrations/                 # Database migrations
+│   ├── 2024_01_01_000000_create_flashcards_table.php
+│   └── 2025_10_02_000000_add_study_fields_to_flashcards.php
+│
+├── seeders/                    # Database seeders
+│   └── FlashcardSeeder.php     # Sample flashcard data
+│
+├── API_ROUTES.md               # API documentation
 │
 ├── scripts/                    # Helper scripts
 │   ├── docker-entrypoint.sh    # Container entrypoint
@@ -277,6 +442,9 @@ docker-compose up --build
 # Start in background (detached)
 docker-compose up -d
 
+docker compose up mysql -d
+docker compose up backend -d
+
 # Stop containers
 docker-compose down
 
@@ -355,8 +523,20 @@ docker exec flashcard-backend composer dump-autoload
 ### Migrations and Database
 
 ```powershell
-# Run migrations manually
-docker exec flashcard-backend php src/Database/migrate.php
+# Run migrations
+docker exec flashcard-backend php migrate up
+
+# Check migration status
+docker exec flashcard-backend php migrate status
+
+# Rollback last batch
+docker exec flashcard-backend php migrate down
+
+# Rollback 2 batches
+docker exec flashcard-backend php migrate down 2
+
+# Reset all migrations (⚠️ requires --force)
+docker exec flashcard-backend php migrate reset --force
 
 # Check MySQL connection
 docker exec flashcard-backend php -r "new PDO('mysql:host=mysql;dbname=flashcards_db', 'flashcard_user', 'flashcard_secret'); echo 'OK';"
@@ -410,6 +590,7 @@ tests/
 
 Test the **Flashcard Model** in isolation:
 
+**CRUD Operations:**
 1. ✅ **testCanCreateFlashcard** - Flashcard creation
 2. ✅ **testCanFindAllFlashcards** - List all
 3. ✅ **testCanFindFlashcardById** - Find by ID
@@ -420,7 +601,15 @@ Test the **Flashcard Model** in isolation:
 8. ✅ **testDeleteReturnsFalseForNonExistentId** - Delete non-existent ID
 9. ✅ **testCanCountFlashcards** - Flashcard count
 
-**Coverage:** Complete CRUD + edge cases
+**Study Mode Features:**
+10. ✅ **testNewFlashcardHasDefaultDifficulty** - Default difficulty values
+11. ✅ **testCanUpdateDifficulty** - Difficulty updates
+12. ✅ **testUpdateDifficultyIncrementsStudyCount** - Study count increment
+13. ✅ **testCanFindByDifficulty** - Filter by difficulty
+14. ✅ **testCanGetStudyStats** - Study statistics
+15. ✅ **testFindForStudyPrioritizesHardCards** - Study prioritization
+
+**Coverage:** Complete CRUD + Study Mode + edge cases (16 tests)
 
 #### **Feature Tests** (`tests/Feature/FlashcardApiTest.php`)
 
@@ -676,10 +865,31 @@ CORS_HEADERS=Content-Type,Authorization
 http://localhost:8000/api
 ```
 
-### Available Endpoints
+> 📖 **Complete API Documentation:** See [API_ROUTES.md](./API_ROUTES.md) for detailed endpoint documentation.
+
+### Route Organization
+
+**CRUD Routes** (Flashcard Management):
+- `GET /api/flashcards` - List all flashcards
+- `GET /api/flashcards/{id}` - Get single flashcard
+- `POST /api/flashcards` - Create flashcard
+- `PUT /api/flashcards/{id}` - Update flashcard
+- `DELETE /api/flashcards/{id}` - Delete flashcard
+
+**Study Mode Routes**:
+- `GET /api/study/flashcards` - Get flashcards for study (prioritized)
+- `GET /api/study/stats` - Get study statistics
+- `PATCH /api/study/flashcards/{id}/difficulty` - Update difficulty after study
+
+**Filter Routes**:
+- `GET /api/flashcards/filter/difficulty/{difficulty}` - Filter by difficulty
+
+### Quick Examples
 
 #### **GET /api/flashcards**
 List all flashcards (ordered by creation date, most recent first).
+
+> **Note:** For study mode, use `/api/study/flashcards` which returns cards prioritized by difficulty.
 
 **Response:**
 ```json
@@ -690,10 +900,14 @@ List all flashcards (ordered by creation date, most recent first).
       "id": 1,
       "front": "What is PHP?",
       "back": "A programming language",
+      "difficulty": "not_studied",
+      "study_count": 0,
+      "last_studied_at": null,
       "created_at": "2025-10-01 21:00:00",
       "updated_at": "2025-10-01 21:00:00"
     }
-  ]
+  ],
+  "count": 1
 }
 ```
 
@@ -848,7 +1062,20 @@ curl -X DELETE http://localhost:8000/api/flashcards/1
 
 ---
 
-**Developed by:** Victor Campelo  
+## 📝 Recent Updates (2025-10-02)
+
+### ✅ Fixed Issues
+- ✅ **Migration System:** Fixed class name detection for timestamps with time components
+- ✅ **MySQL Compatibility:** Replaced `NULLS FIRST` with MySQL-compatible syntax
+- ✅ **Test Database:** Added study fields to test schema
+- ✅ **Transaction Safety:** Added `inTransaction()` check before rollback
+- ✅ **Route Organization:** Reorganized routes into logical groups (CRUD, Study, Filter)
+- ✅ **PHPUnit:** All 22 tests passing successfully
+
+### 🗂️ File Cleanup
+-        "migrate": "php migrate up",
+        "migrate:status": "php migrate status",
+        "migrate:rollback": "php migrate down"
 **Email:** victor_campelo@outlook.com  
 **GitHub:** [kitchtech/flashcard-app](https://github.com/kitchtech/flashcard-app)  
-**Date:** 2025-10-01
+**Last Updated:** 2025-10-02

@@ -38,7 +38,9 @@
         "test:coverage": "phpunit --coverage-html coverage",
         "lint": "phpcs --standard=PSR12 src tests",
         "lint:fix": "phpcbf --standard=PSR12 src tests",
-        "migrate": "php src/Database/migrate.php",
+        "migrate": "php migrate up",
+        "migrate:status": "php migrate status",
+        "migrate:rollback": "php migrate down",
         "serve": "php -S localhost:8000 -t public"
     },
     "config": {

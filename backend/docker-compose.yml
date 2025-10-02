@@ -40,8 +40,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-flashcard_secret}
       - DB_CHARSET=${DB_CHARSET:-utf8mb4}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
-      - CORS_METHODS=${CORS_METHODS:-GET,POST,PUT,DELETE,OPTIONS}
+      - CORS_METHODS=${CORS_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
       - CORS_HEADERS=${CORS_HEADERS:-Content-Type,Authorization}
+      - SEED_DATABASE=${SEED_DATABASE:-true}
     depends_on:
       mysql:
         condition: service_healthy

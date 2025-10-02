@@ -46,6 +46,14 @@ class Router
     }
     
     /**
+     * Register PATCH route
+     */
+    public function patch(string $path, string $handler): void
+    {
+        $this->addRoute('PATCH', $path, $handler);
+    }
+    
+    /**
      * Register RESTful resource routes (shortcut for CRUD)
      * 
      * @param string $path Base path (e.g., '/api/flashcards')
