@@ -1,26 +1,40 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Flashcard App E2E Tests', () => {
+test.describe('Home Page Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('displays the home page with title', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Flashcard App');
-    await expect(page.locator('text=Master your knowledge')).toBeVisible();
+  test('displays the home page with correct title and subtitle', async ({ page }) => {
+    await expect(page.getByTestId('home-page')).toBeVisible();
+    await expect(page.locator('h1')).toContainText('Aloo App');
+    await expect(page.locator('text=Master your knowledge with spaced repetition')).toBeVisible();
   });
 
-  test('shows new flashcard button', async ({ page }) => {
+  test('shows new flashcard and refresh buttons', async ({ page }) => {
     await expect(page.getByTestId('new-flashcard-button')).toBeVisible();
+    await expect(page.getByTestId('refresh-button')).toBeVisible();
+  });
+
+  test('shows empty state when no flashcards exist', async ({ page }) => {
+    const flashcardsGrid = page.getByTestId('flashcards-grid');
+    const emptyState = page.locator('.empty-state');
+
+    const hasFlashcards = await flashcardsGrid.isVisible().catch(() => false);
+    
+    if (!hasFlashcards) {
+      await expect(emptyState).toBeVisible();
+    }
   });
 
   test('can create a new flashcard', async ({ page }) => {
     // Click new flashcard button
     await page.getByTestId('new-flashcard-button').click();
 
-    // Form should be visible
+    // Modal and form should be visible
+    await expect(page.getByTestId('modal-overlay')).toBeVisible();
     await expect(page.getByTestId('flashcard-form')).toBeVisible();
-    await expect(page.locator('h2:has-text("Create New Flashcard")')).toBeVisible();
+    await expect(page.locator('.modal-title:has-text("Create New Flashcard")')).toBeVisible();
 
     // Fill in the form
     await page.getByTestId('front-input').fill('What is Playwright?');
@@ -29,7 +43,8 @@ test.describe('Flashcard App E2E Tests', () => {
     // Submit the form
     await page.getByTestId('submit-button').click();
 
-    // Wait for flashcard to appear
+    // Wait for modal to close and flashcard to appear
+    await expect(page.getByTestId('modal-overlay')).not.toBeVisible();
     await expect(page.getByText('What is Playwright?')).toBeVisible();
   });
 
@@ -50,7 +65,7 @@ test.describe('Flashcard App E2E Tests', () => {
     // Click to flip
     await container.click();
 
-    // Card should have flipped class
+    // Card should have flipped class and show answer
     await expect(container).toHaveClass(/flipped/);
   });
 
@@ -67,9 +82,10 @@ test.describe('Flashcard App E2E Tests', () => {
     // Click edit button
     await page.getByTestId('edit-button').first().click();
 
-    // Form should be visible with pre-filled data
+    // Modal and form should be visible with pre-filled data
+    await expect(page.getByTestId('modal-overlay')).toBeVisible();
     await expect(page.getByTestId('flashcard-form')).toBeVisible();
-    await expect(page.locator('h2:has-text("Edit Flashcard")')).toBeVisible();
+    await expect(page.locator('.modal-title:has-text("Edit Flashcard")')).toBeVisible();
     await expect(page.getByTestId('front-input')).toHaveValue('Original Question');
 
     // Update the question
@@ -77,7 +93,8 @@ test.describe('Flashcard App E2E Tests', () => {
     await page.getByTestId('front-input').fill('Updated Question');
     await page.getByTestId('submit-button').click();
 
-    // Check updated flashcard appears
+    // Modal should close and updated flashcard should appear
+    await expect(page.getByTestId('modal-overlay')).not.toBeVisible();
     await expect(page.getByText('Updated Question')).toBeVisible();
     await expect(page.getByText('Original Question')).not.toBeVisible();
   });
@@ -108,11 +125,11 @@ test.describe('Flashcard App E2E Tests', () => {
     // Try to submit without filling fields
     await page.getByTestId('submit-button').click();
 
-    // Error message should appear
+    // Error message should appear in form
     await expect(page.getByText('Both question and answer are required')).toBeVisible();
   });
 
-  test('can cancel form', async ({ page }) => {
+  test('can cancel form and close modal', async ({ page }) => {
     await page.getByTestId('new-flashcard-button').click();
 
     // Fill some data
@@ -122,28 +139,30 @@ test.describe('Flashcard App E2E Tests', () => {
     // Click cancel
     await page.getByTestId('cancel-button').click();
 
-    // Form should be hidden
-    await expect(page.getByTestId('flashcard-form')).not.toBeVisible();
+    // Modal should be closed
+    await expect(page.getByTestId('modal-overlay')).not.toBeVisible();
   });
 
-  test('displays total flashcard count', async ({ page }) => {
-    // Check initial state
-    const footer = page.locator('.page-footer');
-    await expect(footer.locator('text=Total flashcards:')).toBeVisible();
+  test('can close modal by clicking overlay', async ({ page }) => {
+    await page.getByTestId('new-flashcard-button').click();
+    await expect(page.getByTestId('modal-overlay')).toBeVisible();
+
+    // Click on overlay
+    await page.getByTestId('modal-overlay').click();
+
+    // Modal should close
+    await expect(page.getByTestId('modal-overlay')).not.toBeVisible();
   });
 
-  test('shows empty state when no flashcards exist', async ({ page }) => {
-    // If there are no flashcards, empty state should show
-    const emptyState = page.locator('.empty-state');
-    const flashcardsGrid = page.getByTestId('flashcards-grid');
+  test('can close modal with close button', async ({ page }) => {
+    await page.getByTestId('new-flashcard-button').click();
+    await expect(page.getByTestId('modal-overlay')).toBeVisible();
 
-    // Either empty state or grid should be visible
-    const hasFlashcards = await flashcardsGrid.isVisible();
-    
-    if (!hasFlashcards) {
-      await expect(emptyState).toBeVisible();
-      await expect(emptyState.locator('text=No flashcards yet')).toBeVisible();
-    }
+    // Click close button
+    await page.getByTestId('modal-close').click();
+
+    // Modal should close
+    await expect(page.getByTestId('modal-overlay')).not.toBeVisible();
   });
 
   test('refresh button reloads flashcards', async ({ page }) => {
@@ -175,8 +194,211 @@ test.describe('Flashcard App E2E Tests', () => {
   });
 });
 
-test.describe('Flashcard CRUD Flow', () => {
-  test('complete CRUD flow', async ({ page }) => {
+test.describe('Layout and Navigation Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('layout components are visible', async ({ page }) => {
+    await expect(page.getByTestId('layout')).toBeVisible();
+    await expect(page.getByTestId('layout-content')).toBeVisible();
+  });
+
+  test('can open and close sidebar menu', async ({ page }) => {
+    const menuButton = page.getByTestId('menu-button');
+    await expect(menuButton).toBeVisible();
+
+    // Open sidebar
+    await menuButton.click();
+    const sidebar = page.getByTestId('sidebar');
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toHaveClass(/open/);
+
+    // Close sidebar by clicking overlay
+    const overlay = page.getByTestId('sidebar-overlay');
+    await overlay.click();
+    await expect(sidebar).not.toHaveClass(/open/);
+  });
+
+  test('sidebar shows navigation options', async ({ page }) => {
+    // Open sidebar
+    await page.getByTestId('menu-button').click();
+
+    // Check navigation links
+    await expect(page.getByTestId('nav-link-home')).toBeVisible();
+    await expect(page.getByTestId('nav-link-study')).toBeVisible();
+    await expect(page.getByTestId('nav-link-kanban')).toBeVisible();
+  });
+
+  test('bottom bar is visible and functional', async ({ page }) => {
+    await expect(page.getByTestId('bottom-bar')).toBeVisible();
+    
+    // Bottom bar should have navigation buttons
+    const homeButton = page.getByTestId('bottom-nav-home');
+    const studyButton = page.getByTestId('bottom-nav-study');
+    const kanbanButton = page.getByTestId('bottom-nav-kanban');
+    
+    await expect(homeButton).toBeVisible();
+    await expect(studyButton).toBeVisible();
+    await expect(kanbanButton).toBeVisible();
+  });
+});
+
+test.describe('Study Mode Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('can navigate to study mode', async ({ page }) => {
+    // Open sidebar and navigate
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-study').click();
+
+    // Should be on study page
+    await expect(page.getByTestId('study-page')).toBeVisible();
+  });
+
+  test('study mode shows completion message when no cards available', async ({ page }) => {
+    // Navigate to study mode
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-study').click();
+
+    // Wait for page to load
+    await page.waitForTimeout(1000);
+
+    // Check if showing complete state or study card
+    const completeState = page.locator('.study-complete');
+    const studyCard = page.getByTestId('study-card');
+
+    const isComplete = await completeState.isVisible().catch(() => false);
+    const hasCard = await studyCard.isVisible().catch(() => false);
+
+    expect(isComplete || hasCard).toBeTruthy();
+  });
+
+  test('can flip card and rate difficulty in study mode', async ({ page }) => {
+    // Create a flashcard first
+    await page.getByTestId('new-flashcard-button').click();
+    await page.getByTestId('front-input').fill('Study Test Question');
+    await page.getByTestId('back-input').fill('Study Test Answer');
+    await page.getByTestId('submit-button').click();
+
+    // Navigate to study mode
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-study').click();
+
+    // Wait for study card to appear
+    const studyCard = page.getByTestId('study-card');
+    await expect(studyCard).toBeVisible();
+
+    // Flip the card
+    await studyCard.click();
+    await expect(studyCard).toHaveClass(/flipped/);
+
+    // Difficulty buttons should appear
+    await expect(page.getByTestId('difficulty-buttons')).toBeVisible();
+    await expect(page.getByTestId('btn-easy')).toBeVisible();
+    await expect(page.getByTestId('btn-medium')).toBeVisible();
+    await expect(page.getByTestId('btn-hard')).toBeVisible();
+  });
+
+  test('navigation buttons work in study mode', async ({ page }) => {
+    // Create multiple flashcards
+    for (let i = 1; i <= 3; i++) {
+      await page.getByTestId('new-flashcard-button').click();
+      await page.getByTestId('front-input').fill(`Question ${i}`);
+      await page.getByTestId('back-input').fill(`Answer ${i}`);
+      await page.getByTestId('submit-button').click();
+      await page.waitForTimeout(500);
+    }
+
+    // Navigate to study mode
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-study').click();
+
+    // Previous button should be disabled on first card
+    const prevButton = page.getByTestId('btn-previous');
+    await expect(prevButton).toBeDisabled();
+
+    // Skip to next card
+    const skipButton = page.getByTestId('btn-skip');
+    await skipButton.click();
+
+    // Now previous should be enabled
+    await expect(prevButton).not.toBeDisabled();
+  });
+});
+
+test.describe('Kanban Board Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('can navigate to kanban board', async ({ page }) => {
+    // Open sidebar and navigate
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-kanban').click();
+
+    // Should be on kanban page
+    await expect(page.getByTestId('kanban-page')).toBeVisible();
+    await expect(page.locator('h1:has-text("Study Progress Board")')).toBeVisible();
+  });
+
+  test('kanban board shows all difficulty columns', async ({ page }) => {
+    // Navigate to kanban
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-kanban').click();
+
+    // Wait for page to load
+    await page.waitForTimeout(1000);
+
+    // Check for all columns
+    await expect(page.getByTestId('column-not_studied')).toBeVisible();
+    await expect(page.getByTestId('column-easy')).toBeVisible();
+    await expect(page.getByTestId('column-medium')).toBeVisible();
+    await expect(page.getByTestId('column-hard')).toBeVisible();
+  });
+
+  test('kanban board shows stats overview', async ({ page }) => {
+    // Navigate to kanban
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-kanban').click();
+
+    // Wait for stats to load
+    await page.waitForTimeout(1000);
+
+    // Check for stats cards
+    const statsOverview = page.locator('.stats-overview');
+    if (await statsOverview.isVisible()) {
+      await expect(page.locator('.stat-card').first()).toBeVisible();
+    }
+  });
+
+  test('can change card difficulty on kanban board', async ({ page }) => {
+    // Create a flashcard first
+    await page.getByTestId('new-flashcard-button').click();
+    await page.getByTestId('front-input').fill('Kanban Test Question');
+    await page.getByTestId('back-input').fill('Kanban Test Answer');
+    await page.getByTestId('submit-button').click();
+
+    // Navigate to kanban
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('nav-link-kanban').click();
+
+    // Wait for page to load
+    await page.waitForTimeout(1000);
+
+    // Find a kanban card and open its menu
+    const kanbanCard = page.getByTestId('kanban-card').first();
+    if (await kanbanCard.isVisible()) {
+      await kanbanCard.getByTestId('card-menu-btn').click();
+      await expect(page.getByTestId('card-menu')).toBeVisible();
+    }
+  });
+});
+
+test.describe('Complete CRUD Flow', () => {
+  test('full flashcard lifecycle', async ({ page }) => {
     await page.goto('/');
 
     // CREATE

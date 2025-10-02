@@ -39,35 +39,35 @@ export const useFlashcards = (): UseFlashcardsReturn => {
   const createFlashcard = useCallback(async (data: CreateFlashcardDTO) => {
     try {
       setError(null);
-      await FlashcardService.create(data);
-      await loadFlashcards();
+      const newCard = await FlashcardService.create(data);
+      setFlashcards(prev => [newCard, ...prev]);
     } catch (err) {
       setError('Failed to create flashcard.');
       throw err;
     }
-  }, [loadFlashcards]);
+  }, []);
 
   const updateFlashcard = useCallback(async (id: number, data: UpdateFlashcardDTO) => {
     try {
       setError(null);
-      await FlashcardService.update(id, data);
-      await loadFlashcards();
+      const updated = await FlashcardService.update(id, data);
+      setFlashcards(prev => prev.map(card => card.id === id ? updated : card));
     } catch (err) {
       setError('Failed to update flashcard.');
       throw err;
     }
-  }, [loadFlashcards]);
+  }, []);
 
   const deleteFlashcard = useCallback(async (id: number) => {
     try {
       setError(null);
       await FlashcardService.delete(id);
-      await loadFlashcards();
+      setFlashcards(prev => prev.filter(card => card.id !== id));
     } catch (err) {
       setError('Failed to delete flashcard.');
       console.error('Error deleting flashcard:', err);
     }
-  }, [loadFlashcards]);
+  }, []);
 
   const clearError = useCallback(() => {
     setError(null);

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FlashcardService } from '../../services/flashcardService';
-import { Loading } from '../../components';
+import { Loading, Layout } from '../../components';
+import { useApp } from '../../contexts/AppContext';
 import type { Flashcard, DifficultyLevel, StudyStats } from '../../types/flashcard';
 import './Kanban.css';
 
@@ -23,6 +24,7 @@ const COLUMNS: KanbanColumn[] = [
  * Displays flashcards organized by difficulty level
  */
 export const Kanban: React.FC = () => {
+  const { navigateTo, currentView } = useApp();
   const [flashcardsByDifficulty, setFlashcardsByDifficulty] = useState<
     Record<DifficultyLevel, Flashcard[]>
   >({
@@ -36,10 +38,13 @@ export const Kanban: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentView === 'kanban') {
+      loadData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentView]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,103 +75,133 @@ export const Kanban: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleDifficultyChange = async (cardId: number, newDifficulty: DifficultyLevel) => {
+  const handleDifficultyChange = useCallback(async (cardId: number, newDifficulty: DifficultyLevel) => {
     try {
       await FlashcardService.updateDifficulty(cardId, newDifficulty);
-      await loadData(); // Reload data to reflect changes
+      
+      // Update local state without reloading
+      setFlashcardsByDifficulty(prev => {
+        const updated = { ...prev };
+        let movedCard: Flashcard | null = null;
+        
+        // Find and remove card from old difficulty
+        Object.keys(updated).forEach(key => {
+          const difficulty = key as DifficultyLevel;
+          const index = updated[difficulty].findIndex(c => c.id === cardId);
+          if (index !== -1) {
+            movedCard = { ...updated[difficulty][index], difficulty: newDifficulty };
+            updated[difficulty] = updated[difficulty].filter(c => c.id !== cardId);
+          }
+        });
+        
+        // Add card to new difficulty
+        if (movedCard) {
+          updated[newDifficulty] = [...updated[newDifficulty], movedCard];
+        }
+        
+        return updated;
+      });
     } catch (err) {
       setError('Failed to update difficulty');
       console.error(err);
     }
-  };
+  }, []);
 
-  if (loading) {
-    return <Loading message="Loading kanban board..." fullScreen />;
-  }
+  const totalCards = stats?.total || 0;
 
   return (
-    <div className="kanban-page" data-testid="kanban-page">
-      <header className="kanban-header">
-        <h1>📊 Study Progress Board</h1>
-        <p>Track your flashcard mastery</p>
-      </header>
+    <Layout flashcardsCount={totalCards} title="Kanban Board">
+      <div className="kanban-page" data-testid="kanban-page">
+        {loading ? (
+          <div className="loading-container">
+            <Loading message="Loading kanban board..." fullScreen={false} />
+          </div>
+        ) : (
+          <>
+            <header className="kanban-header">
+              <h1>📊 Study Progress Board</h1>
+              <p>Track your flashcard mastery</p>
+            </header>
 
-      {error && (
-        <div className="error-banner" role="alert">
-          {error}
-          <button onClick={() => setError(null)} className="close-error">
-            ×
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+            <button onClick={() => setError(null)} className="close-error">
+              ×
+            </button>
+          </div>
+        )}
+
+        {stats && (
+          <div className="stats-overview">
+            <div className="stat-card">
+              <div className="stat-value">{stats.total}</div>
+              <div className="stat-label">Total Cards</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{stats.total_studies}</div>
+              <div className="stat-label">Total Studies</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{stats.avg_studies_per_card}</div>
+              <div className="stat-label">Avg per Card</div>
+            </div>
+            <div className="stat-card stat-progress">
+              <div className="stat-value">
+                {stats.total > 0
+                  ? Math.round(((stats.easy + stats.medium) / stats.total) * 100)
+                  : 0}
+                %
+              </div>
+              <div className="stat-label">Mastery</div>
+            </div>
+          </div>
+        )}
+
+        <div className="kanban-board">
+          {COLUMNS.map((column) => (
+            <div key={column.id} className="kanban-column" data-testid={`column-${column.id}`}>
+              <div className="column-header" style={{ borderTopColor: column.color }}>
+                <span className="column-icon">{column.icon}</span>
+                <h3 className="column-title">{column.title}</h3>
+                <span className="column-count">
+                  {flashcardsByDifficulty[column.id].length}
+                </span>
+              </div>
+
+              <div className="column-cards">
+                {flashcardsByDifficulty[column.id].length === 0 ? (
+                  <div className="empty-column">
+                    <p>No cards here</p>
+                  </div>
+                ) : (
+                  flashcardsByDifficulty[column.id].map((card) => (
+                    <KanbanCard
+                      key={card.id}
+                      card={card}
+                      onDifficultyChange={handleDifficultyChange}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <footer className="kanban-footer">
+          <button onClick={() => navigateTo('home')} className="btn btn-secondary">
+            Back to Home
           </button>
-        </div>
-      )}
-
-      {stats && (
-        <div className="stats-overview">
-          <div className="stat-card">
-            <div className="stat-value">{stats.total}</div>
-            <div className="stat-label">Total Cards</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{stats.total_studies}</div>
-            <div className="stat-label">Total Studies</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{stats.avg_studies_per_card}</div>
-            <div className="stat-label">Avg per Card</div>
-          </div>
-          <div className="stat-card stat-progress">
-            <div className="stat-value">
-              {stats.total > 0
-                ? Math.round(((stats.easy + stats.medium) / stats.total) * 100)
-                : 0}
-              %
-            </div>
-            <div className="stat-label">Mastery</div>
-          </div>
-        </div>
-      )}
-
-      <div className="kanban-board">
-        {COLUMNS.map((column) => (
-          <div key={column.id} className="kanban-column" data-testid={`column-${column.id}`}>
-            <div className="column-header" style={{ borderTopColor: column.color }}>
-              <span className="column-icon">{column.icon}</span>
-              <h3 className="column-title">{column.title}</h3>
-              <span className="column-count">
-                {flashcardsByDifficulty[column.id].length}
-              </span>
-            </div>
-
-            <div className="column-cards">
-              {flashcardsByDifficulty[column.id].length === 0 ? (
-                <div className="empty-column">
-                  <p>No cards here</p>
-                </div>
-              ) : (
-                flashcardsByDifficulty[column.id].map((card) => (
-                  <KanbanCard
-                    key={card.id}
-                    card={card}
-                    onDifficultyChange={handleDifficultyChange}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        ))}
+          <button onClick={() => navigateTo('study')} className="btn btn-primary">
+            Start Studying
+          </button>
+        </footer>
+          </>
+        )}
       </div>
-
-      <footer className="kanban-footer">
-        <a href="/" className="btn btn-secondary">
-          Back to Home
-        </a>
-        <a href="/study" className="btn btn-primary">
-          Start Studying
-        </a>
-      </footer>
-    </div>
+    </Layout>
   );
 };
 
@@ -175,13 +210,17 @@ interface KanbanCardProps {
   onDifficultyChange: (cardId: number, difficulty: DifficultyLevel) => void;
 }
 
-const KanbanCard: React.FC<KanbanCardProps> = ({ card, onDifficultyChange }) => {
+const KanbanCard: React.FC<KanbanCardProps> = React.memo(({ card, onDifficultyChange }) => {
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleDifficultySelect = (difficulty: DifficultyLevel) => {
+  const handleDifficultySelect = useCallback((difficulty: DifficultyLevel) => {
     onDifficultyChange(card.id, difficulty);
     setShowMenu(false);
-  };
+  }, [card.id, onDifficultyChange]);
+
+  const toggleMenu = useCallback(() => {
+    setShowMenu(prev => !prev);
+  }, []);
 
   return (
     <div className="kanban-card" data-testid="kanban-card">
@@ -189,7 +228,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ card, onDifficultyChange }) => 
         <span className="card-id">#{card.id}</span>
         <button
           className="card-menu-btn"
-          onClick={() => setShowMenu(!showMenu)}
+          onClick={toggleMenu}
           data-testid="card-menu-btn"
         >
           ⋮
@@ -222,6 +261,8 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ card, onDifficultyChange }) => 
       </div>
     </div>
   );
-};
+});
+
+KanbanCard.displayName = 'KanbanCard';
 
 export default Kanban;

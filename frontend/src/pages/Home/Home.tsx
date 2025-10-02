@@ -4,8 +4,11 @@ import {
   FlashcardForm,
   Loading,
   EmptyState,
+  Modal,
+  Layout,
 } from '../../components';
 import { useFlashcards, useToggle } from '../../hooks';
+import { useApp } from '../../contexts/AppContext';
 import { EMPTY_STATE, ERROR_MESSAGES } from '../../constants';
 import type { Flashcard, CreateFlashcardDTO } from '../../types/flashcard';
 import './Home.css';
@@ -29,9 +32,13 @@ export const Home: React.FC = () => {
   const [showForm, , setShowForm] = useToggle(false);
   const [editingFlashcard, setEditingFlashcard] = React.useState<Flashcard | null>(null);
 
+  const { currentView } = useApp();
+
   useEffect(() => {
-    loadFlashcards();
-  }, [loadFlashcards]);
+    if (currentView === 'home') {
+      loadFlashcards();
+    }
+  }, [currentView, loadFlashcards]);
 
   const handleCreate = useCallback(async (data: CreateFlashcardDTO) => {
     try {
@@ -73,85 +80,82 @@ export const Home: React.FC = () => {
   }, [setShowForm]);
 
   return (
-    <div className="home-page" data-testid="home-page">
-      <header className="page-header">
-        <h1>🎴 Flashcard App</h1>
-        <p>Master your knowledge with spaced repetition</p>
-      </header>
+    <Layout
+      flashcardsCount={flashcards.length}
+      onNewFlashcard={handleNewFlashcard}
+      title="Flashcard App"
+    >
+      <div className="home-page" data-testid="home-page">
+        <header className="page-header">
+          <h1>🎴 Aloo App</h1>
+          <p>Master your knowledge with spaced repetition</p>
+        </header>
 
-      <div className="actions-bar">
-        <button
-          onClick={handleNewFlashcard}
-          className="btn btn-new"
-          data-testid="new-flashcard-button"
-        >
-          + New Flashcard
-        </button>
-        <a href="/study" className="btn btn-study">
-          📚 Study Mode
-        </a>
-        <a href="/kanban" className="btn btn-kanban">
-          📊 Kanban Board
-        </a>
-        <button
-          onClick={loadFlashcards}
-          className="btn btn-refresh"
-          data-testid="refresh-button"
-          disabled={loading}
-        >
-          🔄 Refresh
-        </button>
-      </div>
-
-      {error && (
-        <div className="error-banner" role="alert">
-          {error}
-          <button onClick={clearError} className="close-error">
-            ×
+        <div className="actions-bar">
+          <button
+            onClick={handleNewFlashcard}
+            className="btn btn-new"
+            data-testid="new-flashcard-button"
+          >
+            + New Flashcard
+          </button>
+          <button
+            onClick={loadFlashcards}
+            className="btn btn-refresh"
+            data-testid="refresh-button"
+            disabled={loading}
+          >
+            🔄 Refresh
           </button>
         </div>
-      )}
 
-      {(showForm || editingFlashcard) && (
-        <FlashcardForm
-          flashcard={editingFlashcard || undefined}
-          onSubmit={editingFlashcard ? handleUpdate : handleCreate}
-          onCancel={handleCancelForm}
-        />
-      )}
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+            <button onClick={clearError} className="close-error">
+              ×
+            </button>
+          </div>
+        )}
 
-      {loading ? (
-        <Loading message="Loading flashcards..." fullScreen={false} />
-      ) : flashcards.length === 0 ? (
-        <EmptyState
-          title={EMPTY_STATE.TITLE}
-          description={EMPTY_STATE.DESCRIPTION}
-          icon={EMPTY_STATE.ICON}
-          actionLabel={EMPTY_STATE.ACTION_LABEL}
-          onAction={handleNewFlashcard}
-        />
-      ) : (
-        <div className="flashcards-grid" data-testid="flashcards-grid">
-          {flashcards.map((flashcard) => (
-            <FlashcardCard
-              key={flashcard.id}
-              flashcard={flashcard}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+        <Modal
+          isOpen={showForm || !!editingFlashcard}
+          onClose={handleCancelForm}
+          title={editingFlashcard ? 'Edit Flashcard' : 'Create New Flashcard'}
+        >
+          <FlashcardForm
+            flashcard={editingFlashcard || undefined}
+            onSubmit={editingFlashcard ? handleUpdate : handleCreate}
+            onCancel={handleCancelForm}
+          />
+        </Modal>
+
+        <div className="home-content">
+          {loading ? (
+            <Loading message="Loading flashcards..." fullScreen={false} />
+          ) : flashcards.length === 0 ? (
+            <EmptyState
+              title={EMPTY_STATE.TITLE}
+              description={EMPTY_STATE.DESCRIPTION}
+              icon={EMPTY_STATE.ICON}
+              actionLabel={EMPTY_STATE.ACTION_LABEL}
+              onAction={handleNewFlashcard}
             />
-          ))}
+          ) : (
+            <div className="flashcards-grid" data-testid="flashcards-grid">
+              {flashcards.map((flashcard) => (
+                <FlashcardCard
+                  key={flashcard.id}
+                  flashcard={flashcard}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      <footer className="page-footer">
-        <p>
-          Total flashcards: <strong>{flashcards.length}</strong>
-        </p>
-        <p>
-          Made by <strong>Victor Campelo</strong>
-        </p>
-      </footer>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

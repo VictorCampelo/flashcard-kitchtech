@@ -1,0 +1,120 @@
+.flashcard-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-medium);
+  font-weight: var(--font-medium);
+  font-size: 0.95rem;
+}
+
+.required {
+  color: var(--btn-danger);
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  font-family: inherit;
+  font-size: var(--font-base);
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--btn-primary);
+}
+
+.form-group textarea:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.char-count {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: 0.8rem;
+  color: var(--text-light);
+  text-align: right;
+}
+
+.error-message {
+  padding: 0.75rem var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  background-color: var(--error-bg);
+  color: var(--error-color);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--btn-danger);
+  font-size: 0.9rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+}
+
+.btn {
+  padding: 0.75rem var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-base);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background: var(--btn-primary);
+  color: var(--text-white);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: var(--btn-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--btn-secondary);
+  color: var(--text-white);
+}
+
+.btn-secondary:not(:disabled):hover {
+  background: var(--btn-secondary-hover);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flashcard-form {
+    margin: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

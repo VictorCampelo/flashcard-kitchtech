@@ -1,0 +1,163 @@
+.flashcard-wrapper {
+  width: 100%;
+}
+
+.flashcard-container {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  perspective: 1000px;
+  cursor: pointer;
+  transition: transform var(--transition-slow);
+  transform-style: preserve-3d;
+}
+
+.flashcard-container.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--spacing-xl);
+  background: var(--bg-white);
+  border: 2px solid var(--border-light);
+  box-sizing: border-box;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+  background: var(--bg-gray);
+}
+
+.flashcard-content h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+}
+
+.flashcard-content p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-medium);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.flashcard-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.flashcard-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: 0.75rem;
+}
+
+.btn {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-edit {
+  background: var(--btn-success);
+  color: var(--text-white);
+}
+
+.btn-edit:hover {
+  background: var(--btn-success-hover);
+}
+
+.btn-delete {
+  background: var(--btn-danger);
+  color: var(--text-white);
+}
+
+.btn-delete:hover {
+  background: var(--btn-danger-hover);
+}
+
+.flashcard-metadata {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid #eee;
+}
+
+.flashcard-metadata small {
+  font-size: var(--font-xs);
+  color: var(--text-light);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flashcard-container {
+    height: 260px;
+  }
+
+  .flashcard-front,
+  .flashcard-back {
+    padding: var(--spacing-lg);
+  }
+
+  .flashcard-content h3 {
+    font-size: 1rem;
+  }
+
+  .flashcard-content p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .flashcard-container {
+    height: 240px;
+  }
+
+  .flashcard-front,
+  .flashcard-back {
+    padding: var(--spacing-md);
+  }
+
+  .flashcard-content h3 {
+    font-size: 0.95rem;
+  }
+
+  .flashcard-content p {
+    font-size: 0.85rem;
+  }
+
+  .flashcard-hint {
+    font-size: 0.75rem;
+  }
+
+  .flashcard-metadata small {
+    font-size: 0.7rem;
+  }
+}

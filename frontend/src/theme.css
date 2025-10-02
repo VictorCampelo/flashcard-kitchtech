@@ -1,0 +1,137 @@
+:root {
+  /* Primary Colors */
+  --primary-gradient-start: #667eea;
+  --primary-gradient-end: #764ba2;
+  --primary-color: #667eea;
+  --primary-hover: #764ba2;
+
+  /* Secondary Colors */
+  --secondary-gradient-start: #f59e0b;
+  --secondary-gradient-end: #ef4444;
+
+  /* Background Colors */
+  --bg-light: #f5f7fa;
+  --bg-light-gradient-start: #f5f7fa;
+  --bg-light-gradient-end: #c3cfe2;
+  --bg-white: white;
+  --bg-gray: #f8f9fa;
+  --bg-gray-light: #f9fafb;
+  --bg-gray-medium: #f3f4f6;
+  --bg-light-overlay: rgba(255, 255, 255, 0.1);
+  --bg-light-overlay-2: rgba(255, 255, 255, 0.2);
+  --bg-light-overlay-3: rgba(255, 255, 255, 0.3);
+
+  /* Text Colors */
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-dark: #333;
+  --text-medium: #555;
+  --text-light: #999;
+  --text-white: white;
+
+  /* Border Colors */
+  --border-light: #e0e0e0;
+  --border-gray: #e5e7eb;
+  --border-gray-medium: #d1d5db;
+  --border-gray-dark: #9ca3af;
+
+  /* Status Colors - Easy (Green) */
+  --easy-color: #16a34a;
+  --easy-light: #22c55e;
+  --easy-lighter: #4ade80;
+  --easy-lightest: #86efac;
+  --easy-bg: #f0fdf4;
+  --easy-bg-alpha: rgba(34, 197, 94, 0.3);
+
+  /* Status Colors - Medium (Orange) */
+  --medium-color: #ea580c;
+  --medium-light: #fb923c;
+  --medium-lighter: #fdba74;
+  --medium-bg: #fff7ed;
+  --medium-bg-alpha: rgba(251, 146, 60, 0.3);
+
+  /* Status Colors - Hard (Red) */
+  --hard-color: #dc2626;
+  --hard-light: #ef4444;
+  --hard-lighter: #fca5a5;
+  --hard-bg: #fef2f2;
+  --hard-bg-alpha: rgba(239, 68, 68, 0.3);
+
+  /* Status Colors - Not Studied (Gray) */
+  --not-studied-bg: rgba(156, 163, 175, 0.3);
+
+  /* Button Colors */
+  --btn-success: #4CAF50;
+  --btn-success-hover: #45a049;
+  --btn-danger: #f44336;
+  --btn-danger-hover: #da190b;
+  --btn-primary: #2196F3;
+  --btn-primary-hover: #1976D2;
+  --btn-secondary: #9E9E9E;
+  --btn-secondary-hover: #757575;
+  --btn-warning: #FF9800;
+  --btn-warning-hover: #F57C00;
+
+  /* Error Colors */
+  --error-color: #c62828;
+  --error-bg: #ffebee;
+  --error-border: #f44336;
+  --error-dark: #991b1b;
+  --error-dark-bg: #fee2e2;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 10px 40px rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --shadow-primary: 0 4px 12px rgba(102, 126, 234, 0.3);
+  --shadow-primary-hover: 0 6px 16px rgba(102, 126, 234, 0.4);
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 50%;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Font Sizes */
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-base: 1rem;
+  --font-md: 1.1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+  --font-3xl: 2rem;
+  --font-4xl: 2.5rem;
+  --font-5xl: 3rem;
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.6s ease;
+
+  /* Z-index */
+  --z-dropdown: 10;
+  --z-modal: 100;
+
+  /* Backdrop */
+  --backdrop-blur: blur(10px);
+}
