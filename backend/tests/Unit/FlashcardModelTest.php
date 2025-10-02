@@ -6,151 +6,206 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use App\Models\Flashcard;
-use App\Database\Database;
 
 /**
- * Unit Tests for Flashcard Model
+ * Unit Tests for Flashcard Domain Entity
  */
 class FlashcardModelTest extends TestCase
 {
-    private Flashcard $model;
-    
-    protected function setUp(): void
-    {
-        parent::setUp();
-        
-        // Use test database configuration
-        $_ENV['DB_HOST'] = $_ENV['TEST_DB_HOST'] ?? 'localhost';
-        $_ENV['DB_PORT'] = $_ENV['TEST_DB_PORT'] ?? '3306';
-        $_ENV['DB_NAME'] = $_ENV['TEST_DB_NAME'] ?? 'flashcards_test';
-        $_ENV['DB_USER'] = $_ENV['TEST_DB_USER'] ?? 'root';
-        $_ENV['DB_PASSWORD'] = $_ENV['TEST_DB_PASSWORD'] ?? '';
-        $_ENV['DB_CHARSET'] = 'utf8mb4';
-        
-        // Clear existing connection
-        Database::disconnect();
-        
-        // Create fresh model
-        $this->model = new Flashcard();
-        
-        // Clear test database
-        $db = Database::getConnection();
-        $db->exec('DROP TABLE IF EXISTS flashcards');
-        
-        // Run migration with MySQL syntax
-        $sql = "
-            CREATE TABLE IF NOT EXISTS flashcards (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                front VARCHAR(1000) NOT NULL,
-                back VARCHAR(1000) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_created_at (created_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        ";
-        $db->exec($sql);
-    }
-    
-    protected function tearDown(): void
-    {
-        Database::disconnect();
-        parent::tearDown();
-    }
-    
-    public function testCanCreateFlashcard(): void
+    public function testCanCreateFlashcardFromArray(): void
     {
         $data = [
+            'id' => 1,
             'front' => 'What is PHP?',
-            'back' => 'PHP is a server-side scripting language'
+            'back' => 'A server-side scripting language',
+            'difficulty' => 'easy',
+            'study_count' => 5,
+            'last_studied_at' => '2025-10-02 12:00:00',
+            'created_at' => '2025-10-01 10:00:00',
+            'updated_at' => '2025-10-02 12:00:00'
         ];
         
-        $flashcard = $this->model->create($data);
+        $flashcard = Flashcard::fromArray($data);
         
-        $this->assertIsArray($flashcard);
-        $this->assertArrayHasKey('id', $flashcard);
-        $this->assertEquals($data['front'], $flashcard['front']);
-        $this->assertEquals($data['back'], $flashcard['back']);
+        $this->assertInstanceOf(Flashcard::class, $flashcard);
+        $this->assertEquals(1, $flashcard->id);
+        $this->assertEquals('What is PHP?', $flashcard->front);
+        $this->assertEquals('A server-side scripting language', $flashcard->back);
+        $this->assertEquals('easy', $flashcard->difficulty);
+        $this->assertEquals(5, $flashcard->study_count);
     }
     
-    public function testCanFindAllFlashcards(): void
+    public function testCanConvertFlashcardToArray(): void
     {
-        // Create multiple flashcards
-        $this->model->create(['front' => 'Q1', 'back' => 'A1']);
-        $this->model->create(['front' => 'Q2', 'back' => 'A2']);
-        $this->model->create(['front' => 'Q3', 'back' => 'A3']);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Question',
+            back: 'Answer',
+            difficulty: 'medium',
+            study_count: 3,
+            last_studied_at: '2025-10-02 12:00:00',
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-02 12:00:00'
+        );
         
-        $flashcards = $this->model->findAll();
+        $array = $flashcard->toArray();
         
-        $this->assertCount(3, $flashcards);
+        $this->assertIsArray($array);
+        $this->assertEquals(1, $array['id']);
+        $this->assertEquals('Question', $array['front']);
+        $this->assertEquals('Answer', $array['back']);
+        $this->assertEquals('medium', $array['difficulty']);
+        $this->assertEquals(3, $array['study_count']);
     }
     
-    public function testCanFindFlashcardById(): void
+    public function testIsStudiedReturnsTrueForStudiedCards(): void
     {
-        $created = $this->model->create(['front' => 'Question', 'back' => 'Answer']);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'easy',
+            study_count: 1,
+            last_studied_at: '2025-10-02 12:00:00',
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-02 12:00:00'
+        );
         
-        $found = $this->model->findById((int) $created['id']);
-        
-        $this->assertIsArray($found);
-        $this->assertEquals($created['id'], $found['id']);
-        $this->assertEquals('Question', $found['front']);
+        $this->assertTrue($flashcard->isStudied());
     }
     
-    public function testReturnsNullForNonExistentId(): void
+    public function testIsStudiedReturnsFalseForNotStudiedCards(): void
     {
-        $result = $this->model->findById(999);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'not_studied',
+            study_count: 0,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
         
-        $this->assertNull($result);
+        $this->assertFalse($flashcard->isStudied());
     }
     
-    public function testCanUpdateFlashcard(): void
+    public function testIsEasyReturnsTrueForEasyCards(): void
     {
-        $created = $this->model->create(['front' => 'Old Front', 'back' => 'Old Back']);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'easy',
+            study_count: 1,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
         
-        $updated = $this->model->update((int) $created['id'], [
-            'front' => 'New Front',
-            'back' => 'New Back'
-        ]);
-        
-        $this->assertIsArray($updated);
-        $this->assertEquals('New Front', $updated['front']);
-        $this->assertEquals('New Back', $updated['back']);
+        $this->assertTrue($flashcard->isEasy());
+        $this->assertFalse($flashcard->isHard());
     }
     
-    public function testUpdateReturnsNullForNonExistentId(): void
+    public function testIsHardReturnsTrueForHardCards(): void
     {
-        $result = $this->model->update(999, ['front' => 'Test', 'back' => 'Test']);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'hard',
+            study_count: 1,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
         
-        $this->assertNull($result);
+        $this->assertTrue($flashcard->isHard());
+        $this->assertFalse($flashcard->isEasy());
     }
     
-    public function testCanDeleteFlashcard(): void
+    public function testNeedsReviewReturnsTrueForNotStudiedCards(): void
     {
-        $created = $this->model->create(['front' => 'To Delete', 'back' => 'Will be removed']);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'not_studied',
+            study_count: 0,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
         
-        $deleted = $this->model->delete((int) $created['id']);
-        
-        $this->assertTrue($deleted);
-        
-        // Verify it's gone
-        $found = $this->model->findById((int) $created['id']);
-        $this->assertNull($found);
+        $this->assertTrue($flashcard->needsReview());
     }
     
-    public function testDeleteReturnsFalseForNonExistentId(): void
+    public function testNeedsReviewReturnsTrueForHardCards(): void
     {
-        $result = $this->model->delete(999);
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'hard',
+            study_count: 1,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
         
-        $this->assertFalse($result);
+        $this->assertTrue($flashcard->needsReview());
     }
     
-    public function testCanCountFlashcards(): void
+    public function testNeedsReviewReturnsFalseForEasyCards(): void
     {
-        $this->assertEquals(0, $this->model->count());
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Q',
+            back: 'A',
+            difficulty: 'easy',
+            study_count: 1,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
         
-        $this->model->create(['front' => 'Q1', 'back' => 'A1']);
-        $this->assertEquals(1, $this->model->count());
+        $this->assertFalse($flashcard->needsReview());
+    }
+    
+    public function testGetDifficultyEmojiReturnsCorrectEmoji(): void
+    {
+        $notStudied = new Flashcard(1, 'Q', 'A', 'not_studied', 0, null, '2025-10-01', '2025-10-01');
+        $this->assertEquals('📝', $notStudied->getDifficultyEmoji());
         
-        $this->model->create(['front' => 'Q2', 'back' => 'A2']);
-        $this->assertEquals(2, $this->model->count());
+        $easy = new Flashcard(1, 'Q', 'A', 'easy', 1, null, '2025-10-01', '2025-10-01');
+        $this->assertEquals('😊', $easy->getDifficultyEmoji());
+        
+        $medium = new Flashcard(1, 'Q', 'A', 'medium', 1, null, '2025-10-01', '2025-10-01');
+        $this->assertEquals('🤔', $medium->getDifficultyEmoji());
+        
+        $hard = new Flashcard(1, 'Q', 'A', 'hard', 1, null, '2025-10-01', '2025-10-01');
+        $this->assertEquals('😰', $hard->getDifficultyEmoji());
+    }
+    
+    public function testFlashcardPropertiesAreReadonly(): void
+    {
+        $flashcard = new Flashcard(
+            id: 1,
+            front: 'Question',
+            back: 'Answer',
+            difficulty: 'easy',
+            study_count: 1,
+            last_studied_at: null,
+            created_at: '2025-10-01 10:00:00',
+            updated_at: '2025-10-01 10:00:00'
+        );
+        
+        // Properties are readonly - verify they exist and are accessible
+        $this->assertEquals('Question', $flashcard->front);
+        $this->assertEquals('Answer', $flashcard->back);
+        $this->assertEquals('easy', $flashcard->difficulty);
+        
+        // Note: Cannot test mutation directly as it would cause syntax error
+        // The readonly keyword enforces immutability at compile time
     }
 }

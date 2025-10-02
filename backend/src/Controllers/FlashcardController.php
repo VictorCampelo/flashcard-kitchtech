@@ -40,12 +40,12 @@ class FlashcardController extends BaseController
         try {
             $filter = $_GET['filter'] ?? null;
             $difficulty = $_GET['difficulty'] ?? null;
-            
+
             $flashcards = $this->service->getAllFlashcards($filter, $difficulty);
-            
+
             // Convert Flashcard objects to arrays for JSON
             $data = array_map(fn($f) => $f->toArray(), $flashcards);
-            
+
             $this->sendSuccess([
                 'data' => $data,
                 'count' => count($data)
@@ -65,12 +65,12 @@ class FlashcardController extends BaseController
         try {
             $flashcardId = $this->validateId($id);
             $flashcard = $this->service->getFlashcardById($flashcardId);
-            
+
             if (!$flashcard) {
                 $this->sendError('Flashcard not found', 404);
                 return;
             }
-            
+
             $this->sendSuccess($flashcard->toArray());
         } catch (\Exception $e) {
             $this->sendError('Failed to fetch flashcard', 500, $e);
@@ -85,7 +85,7 @@ class FlashcardController extends BaseController
         try {
             $data = $this->getRequestBody();
             $flashcard = $this->service->createFlashcard($data);
-            
+
             $this->sendSuccess($flashcard->toArray(), 201, 'Flashcard created successfully');
         } catch (\InvalidArgumentException $e) {
             $errors = json_decode($e->getMessage(), true);
@@ -104,7 +104,7 @@ class FlashcardController extends BaseController
             $flashcardId = $this->validateId($id);
             $data = $this->getRequestBody();
             $flashcard = $this->service->updateFlashcard($flashcardId, $data);
-            
+
             $this->sendSuccess($flashcard->toArray(), 200, 'Flashcard updated successfully');
         } catch (\InvalidArgumentException $e) {
             $errors = json_decode($e->getMessage(), true);
@@ -115,7 +115,7 @@ class FlashcardController extends BaseController
             $this->sendError('Failed to update flashcard', 500, $e);
         }
     }
-    
+
     /**
      * DELETE /api/flashcards/{id} - Delete flashcard
      */
@@ -124,7 +124,7 @@ class FlashcardController extends BaseController
         try {
             $flashcardId = $this->validateId($id);
             $this->service->deleteFlashcard($flashcardId);
-            
+
             $this->sendSuccess(null, 200, 'Flashcard deleted successfully');
         } catch (\RuntimeException $e) {
             $this->sendError($e->getMessage(), 404);
@@ -132,7 +132,7 @@ class FlashcardController extends BaseController
             $this->sendError('Failed to delete flashcard', 500, $e);
         }
     }
-    
+
     // ============================================
     // STUDY OPERATIONS
     // ============================================
@@ -145,14 +145,14 @@ class FlashcardController extends BaseController
         try {
             $flashcardId = $this->validateId($id);
             $data = $this->getRequestBody();
-            
+
             if (!isset($data['difficulty'])) {
                 $this->sendValidationError(['difficulty' => 'Difficulty is required']);
                 return;
             }
-            
+
             $flashcard = $this->service->updateDifficulty($flashcardId, $data['difficulty']);
-            
+
             $this->sendSuccess($flashcard->toArray(), 200, 'Difficulty updated successfully');
         } catch (\InvalidArgumentException $e) {
             $this->sendValidationError(['difficulty' => $e->getMessage()]);
