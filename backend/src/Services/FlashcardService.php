@@ -43,6 +43,34 @@ class FlashcardService
     }
     
     /**
+     * Get all flashcards with pagination
+     * @return array{data: array, total: int, page: int, per_page: int, total_pages: int}
+     */
+    public function getAllFlashcardsPaginated(int $page = 1, int $perPage = 10, ?string $filter = null, ?string $difficulty = null): array
+    {
+        // Validate difficulty if provided
+        if ($difficulty) {
+            $this->validateDifficulty($difficulty);
+        }
+        
+        // Validate pagination parameters
+        if ($page < 1) {
+            throw new \InvalidArgumentException('Page must be greater than 0');
+        }
+        
+        if ($perPage < 1 || $perPage > 100) {
+            throw new \InvalidArgumentException('Per page must be between 1 and 100');
+        }
+        
+        $result = $this->repository->findAllPaginated($page, $perPage, $filter, $difficulty);
+        
+        // Convert Flashcard objects to arrays
+        $result['data'] = array_map(fn($f) => $f->toArray(), $result['data']);
+        
+        return $result;
+    }
+    
+    /**
      * Get flashcard by ID
      */
     public function getFlashcardById(int $id): ?Flashcard

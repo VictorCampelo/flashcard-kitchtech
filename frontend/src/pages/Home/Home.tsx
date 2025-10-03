@@ -6,6 +6,7 @@ import {
   EmptyState,
   ConfirmModal,
   Layout,
+  Pagination,
 } from "../../components";
 import { CreateFlashcardModal as Modal } from "../../components/Modals/CreateFlashcardModal/CreateFlashcardModal";
 import { EMPTY_STATE, ERROR_MESSAGES } from "../../constants";
@@ -22,10 +23,13 @@ export const Home: React.FC = () => {
     flashcards,
     loading,
     error,
+    pagination,
     loadFlashcards,
     createFlashcard,
     updateFlashcard,
     deleteFlashcard,
+    setPage,
+    setPerPage,
     clearError,
   } = useFlashcards();
 
@@ -112,6 +116,16 @@ export const Home: React.FC = () => {
     setShowForm(true);
   }, [setShowForm]);
 
+  const handlePageChange = useCallback((page: number) => {
+    setPage(page);
+    loadFlashcards(page);
+  }, [setPage, loadFlashcards]);
+
+  const handlePerPageChange = useCallback((perPage: number) => {
+    setPerPage(perPage);
+    loadFlashcards(1, perPage);
+  }, [setPerPage, loadFlashcards]);
+
   return (
     <Layout
       flashcardsCount={flashcards.length}
@@ -133,7 +147,7 @@ export const Home: React.FC = () => {
             + New Flashcard
           </button>
           <button
-            onClick={loadFlashcards}
+            onClick={() => loadFlashcards()}
             className="btn btn-refresh"
             data-testid="refresh-button"
             disabled={loading}
@@ -196,6 +210,17 @@ export const Home: React.FC = () => {
                 />
               ))}
             </div>
+          )}
+
+          {!loading && flashcards.length > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              perPage={pagination.perPage}
+              onPageChange={handlePageChange}
+              onPerPageChange={handlePerPageChange}
+            />
           )}
         </div>
       </div>

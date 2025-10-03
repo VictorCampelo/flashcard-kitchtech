@@ -10,11 +10,19 @@ const mockCreateFlashcard = vi.fn();
 const mockUpdateFlashcard = vi.fn();
 const mockDeleteFlashcard = vi.fn();
 const mockClearError = vi.fn();
+const mockSetPage = vi.fn();
+const mockSetPerPage = vi.fn();
 
 // Mock state
 let mockFlashcardsState: Flashcard[] = [];
 let mockLoadingState = false;
 let mockErrorState: string | null = null;
+const mockPaginationState = {
+  page: 1,
+  perPage: 10,
+  total: 0,
+  totalPages: 0,
+};
 
 // Mock the hooks
 vi.mock('../../hooks', () => ({
@@ -22,10 +30,13 @@ vi.mock('../../hooks', () => ({
     flashcards: mockFlashcardsState,
     loading: mockLoadingState,
     error: mockErrorState,
+    pagination: mockPaginationState,
     loadFlashcards: mockLoadFlashcards,
     createFlashcard: mockCreateFlashcard,
     updateFlashcard: mockUpdateFlashcard,
     deleteFlashcard: mockDeleteFlashcard,
+    setPage: mockSetPage,
+    setPerPage: mockSetPerPage,
     clearError: mockClearError,
   }),
   useToggle: (initialValue: boolean) => {
@@ -78,6 +89,15 @@ interface FlashcardCardProps {
   flashcard: Flashcard;
   onEdit: (flashcard: Flashcard) => void;
   onDelete: (id: number) => void;
+}
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  total: number;
+  perPage: number;
+  onPageChange: (page: number) => void;
+  onPerPageChange?: (perPage: number) => void;
 }
 
 // Mock the CreateFlashcardModal direct import
@@ -168,6 +188,39 @@ vi.mock('../../components', () => ({
       >
         Delete
       </button>
+    </div>
+  ),
+  Pagination: ({ currentPage, totalPages, total, perPage, onPageChange, onPerPageChange }: PaginationProps) => (
+    <div data-testid="pagination">
+      <span data-testid="pagination-info">
+        Showing {(currentPage - 1) * perPage + 1}-{Math.min(currentPage * perPage, total)} of {total}
+      </span>
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        data-testid="pagination-prev"
+      >
+        Previous
+      </button>
+      <span data-testid="current-page">{currentPage}</span>
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        data-testid="pagination-next"
+      >
+        Next
+      </button>
+      {onPerPageChange && (
+        <select
+          value={perPage}
+          onChange={(e) => onPerPageChange(Number(e.target.value))}
+          data-testid="per-page-select"
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+        </select>
+      )}
     </div>
   ),
 }));
@@ -508,6 +561,96 @@ describe("Home", () => {
       fireEvent.click(newButton);
 
       expect(screen.getByText('Create New Flashcard')).toBeInTheDocument();
+    });
+  });
+
+  describe('Pagination', () => {
+    beforeEach(() => {
+      mockFlashcardsState = mockFlashcards;
+      mockPaginationState.page = 1;
+      mockPaginationState.perPage = 10;
+      mockPaginationState.total = 25;
+      mockPaginationState.totalPages = 3;
+    });
+
+    it('displays pagination when flashcards exist', () => {
+      render(<Home />);
+
+      expect(screen.getByTestId('pagination')).toBeInTheDocument();
+    });
+
+    it('does not display pagination when loading', () => {
+      mockLoadingState = true;
+
+      render(<Home />);
+
+      expect(screen.queryByTestId('pagination')).not.toBeInTheDocument();
+    });
+
+    it('does not display pagination when no flashcards', () => {
+      mockFlashcardsState = [];
+      mockPaginationState.total = 0;
+
+      render(<Home />);
+
+      expect(screen.queryByTestId('pagination')).not.toBeInTheDocument();
+    });
+
+    it('displays correct pagination info', () => {
+      render(<Home />);
+
+      expect(screen.getByTestId('pagination-info')).toHaveTextContent('Showing 1-10 of 25');
+    });
+
+    it('calls setPage and loadFlashcards when next page is clicked', () => {
+      render(<Home />);
+
+      const nextButton = screen.getByTestId('pagination-next');
+      fireEvent.click(nextButton);
+
+      expect(mockSetPage).toHaveBeenCalledWith(2);
+      expect(mockLoadFlashcards).toHaveBeenCalledWith(2);
+    });
+
+    it('calls setPage and loadFlashcards when previous page is clicked', () => {
+      mockPaginationState.page = 2;
+
+      render(<Home />);
+
+      const prevButton = screen.getByTestId('pagination-prev');
+      fireEvent.click(prevButton);
+
+      expect(mockSetPage).toHaveBeenCalledWith(1);
+      expect(mockLoadFlashcards).toHaveBeenCalledWith(1);
+    });
+
+    it('calls setPerPage and loadFlashcards when per page is changed', () => {
+      render(<Home />);
+
+      const perPageSelect = screen.getByTestId('per-page-select');
+      fireEvent.change(perPageSelect, { target: { value: '20' } });
+
+      expect(mockSetPerPage).toHaveBeenCalledWith(20);
+      expect(mockLoadFlashcards).toHaveBeenCalledWith(1, 20);
+    });
+
+    it('disables previous button on first page', () => {
+      mockPaginationState.page = 1;
+
+      render(<Home />);
+
+      const prevButton = screen.getByTestId('pagination-prev');
+      expect(prevButton).toBeDisabled();
+    });
+
+    it('disables next button on last page', () => {
+      mockPaginationState.page = 3;
+      mockPaginationState.totalPages = 3;
+
+      render(<Home />);
+
+      const nextButton = screen.getByTestId('pagination-next');
+      expect(nextButton).toBeDisabled();
     });
   });
 });

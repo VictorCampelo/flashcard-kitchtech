@@ -32,6 +32,8 @@ class FlashcardController extends BaseController
     /**
      * GET /api/flashcards - List all flashcards
      * Supports query parameters:
+     * - ?page=1 - Page number (default: 1)
+     * - ?per_page=10 - Items per page (default: 10, max: 100)
      * - ?filter=study - Get flashcards prioritized for study
      * - ?difficulty=easy|medium|hard|not_studied - Filter by difficulty
      */
@@ -40,16 +42,13 @@ class FlashcardController extends BaseController
         try {
             $filter = $_GET['filter'] ?? null;
             $difficulty = $_GET['difficulty'] ?? null;
+            $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+            $perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 10;
 
-            $flashcards = $this->service->getAllFlashcards($filter, $difficulty);
+            // Use pagination
+            $result = $this->service->getAllFlashcardsPaginated($page, $perPage, $filter, $difficulty);
 
-            // Convert Flashcard objects to arrays for JSON
-            $data = array_map(fn($f) => $f->toArray(), $flashcards);
-
-            $this->sendSuccess([
-                'data' => $data,
-                'count' => count($data)
-            ]);
+            $this->sendSuccess($result);
         } catch (\InvalidArgumentException $e) {
             $this->sendError($e->getMessage(), 400);
         } catch (\Exception $e) {

@@ -44,7 +44,10 @@ describe('FlashcardService', () => {
         data: {
           success: true,
           data: [mockFlashcard],
-          count: 1,
+          total: 1,
+          page: 1,
+          per_page: 100,
+          total_pages: 1,
         },
       };
 
@@ -53,13 +56,58 @@ describe('FlashcardService', () => {
       const result = await FlashcardService.getAll();
 
       expect(result).toEqual([mockFlashcard]);
-      expect(mockedApi.get).toHaveBeenCalledWith('/flashcards');
+      expect(mockedApi.get).toHaveBeenCalledWith('/flashcards?per_page=100');
     });
 
     it('throws error when API call fails', async () => {
       mockedApi.get.mockRejectedValue(new Error('Network error'));
 
       await expect(FlashcardService.getAll()).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('getPaginated', () => {
+    it('fetches paginated flashcards successfully', async () => {
+      const mockResponse = {
+        data: {
+          success: true,
+          data: [mockFlashcard],
+          total: 10,
+          page: 1,
+          per_page: 10,
+          total_pages: 1,
+        },
+      };
+
+      mockedApi.get.mockResolvedValue(mockResponse);
+
+      const result = await FlashcardService.getPaginated(1, 10);
+
+      expect(result.data).toEqual([mockFlashcard]);
+      expect(result.total).toBe(10);
+      expect(result.page).toBe(1);
+      expect(result.per_page).toBe(10);
+      expect(result.total_pages).toBe(1);
+      expect(mockedApi.get).toHaveBeenCalledWith('/flashcards?page=1&per_page=10');
+    });
+
+    it('uses default values when not provided', async () => {
+      const mockResponse = {
+        data: {
+          success: true,
+          data: [],
+          total: 0,
+          page: 1,
+          per_page: 10,
+          total_pages: 0,
+        },
+      };
+
+      mockedApi.get.mockResolvedValue(mockResponse);
+
+      await FlashcardService.getPaginated();
+
+      expect(mockedApi.get).toHaveBeenCalledWith('/flashcards?page=1&per_page=10');
     });
   });
 

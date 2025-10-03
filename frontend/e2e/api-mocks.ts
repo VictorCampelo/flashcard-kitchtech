@@ -29,13 +29,30 @@ export async function setupApiMocks(page: Page) {
     
     console.log(`[MOCK] Intercepted: ${method} ${url}`);
 
-    // GET /api/flashcards - List all flashcards
-    if (method === "GET" && url.endsWith("/flashcards")) {
-      console.log(`[MOCK] Returning ${mockFlashcards.length} flashcards`);
+    // GET /api/flashcards - List all flashcards (with pagination)
+    if (method === "GET" && url.includes("/flashcards")) {
+      const urlObj = new URL(url);
+      const page = parseInt(urlObj.searchParams.get('page') || '1');
+      const perPage = parseInt(urlObj.searchParams.get('per_page') || '1000');
+      
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      const paginatedData = mockFlashcards.slice(start, end);
+      const total = mockFlashcards.length;
+      const totalPages = Math.ceil(total / perPage);
+      
+      console.log(`[MOCK] Returning page ${page} with ${paginatedData.length} flashcards (total: ${total})`);
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ data: mockFlashcards }),
+        body: JSON.stringify({
+          success: true,
+          data: paginatedData,
+          total: total,
+          page: page,
+          per_page: perPage,
+          total_pages: totalPages
+        }),
       });
       return;
     }

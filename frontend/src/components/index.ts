@@ -13,3 +13,4 @@ export { ConfirmModal } from './Modals/ConfirmModal/ConfirmModal';
 export { Layout } from './Layout/Layout';
 export { Sidebar } from './Sidebar/Sidebar';
 export { BottomBar } from './BottomBar/BottomBar';
+export { Pagination } from './Pagination/Pagination';

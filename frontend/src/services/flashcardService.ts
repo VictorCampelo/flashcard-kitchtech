@@ -4,6 +4,7 @@ import type {
   CreateFlashcardDTO,
   UpdateFlashcardDTO,
   FlashcardListResponse,
+  PaginatedFlashcardResponse,
   FlashcardResponse,
   StudyStats,
   UpdateDifficultyDTO,
@@ -16,11 +17,25 @@ import type {
  */
 export class FlashcardService {
   /**
-   * Get all flashcards
+   * Get all flashcards (without pagination - returns up to 100 items)
    */
   static async getAll(): Promise<Flashcard[]> {
-    const response = await api.get<FlashcardListResponse>('/flashcards');
+    const response = await api.get<FlashcardListResponse>('/flashcards?per_page=100');
     return response.data.data;
+  }
+
+  /**
+   * Get flashcards with pagination
+   */
+  static async getPaginated(page: number = 1, perPage: number = 10): Promise<{ data: Flashcard[]; total: number; page: number; per_page: number; total_pages: number }> {
+    const response = await api.get<PaginatedFlashcardResponse>(`/flashcards?page=${page}&per_page=${perPage}`);
+    return {
+      data: response.data.data,
+      total: response.data.total,
+      page: response.data.page,
+      per_page: response.data.per_page,
+      total_pages: response.data.total_pages,
+    };
   }
 
   /**

@@ -215,6 +215,98 @@ class FlashcardRepository
     }
     
     /**
+     * Find all flashcards with pagination
+     * @return array{data: Flashcard[], total: int, page: int, per_page: int, total_pages: int}
+     */
+    public function findAllPaginated(int $page = 1, int $perPage = 10, ?string $filter = null, ?string $difficulty = null): array
+    {
+        // Build base query based on filter
+        if ($filter === 'study') {
+            $baseQuery = "
+                SELECT * FROM flashcards
+                ORDER BY 
+                    CASE difficulty
+                        WHEN 'not_studied' THEN 1
+                        WHEN 'hard' THEN 2
+                        WHEN 'medium' THEN 3
+                        WHEN 'easy' THEN 4
+                    END,
+                    study_count ASC,
+                    CASE 
+                        WHEN last_studied_at IS NULL THEN 1
+                        ELSE 0
+                    END DESC,
+                    last_studied_at ASC
+            ";
+            $countQuery = "SELECT COUNT(*) as total FROM flashcards";
+            $params = [];
+        } elseif ($difficulty) {
+            $baseQuery = "
+                SELECT * FROM flashcards 
+                WHERE difficulty = :difficulty
+                ORDER BY created_at DESC
+            ";
+            $countQuery = "SELECT COUNT(*) as total FROM flashcards WHERE difficulty = :difficulty";
+            $params = ['difficulty' => $difficulty];
+        } else {
+            $baseQuery = "
+                SELECT * FROM flashcards 
+                ORDER BY created_at DESC
+            ";
+            $countQuery = "SELECT COUNT(*) as total FROM flashcards";
+            $params = [];
+        }
+        
+        // Get total count
+        $countStmt = $this->db->prepare($countQuery);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+        
+        // Calculate pagination
+        $totalPages = (int) ceil($total / $perPage);
+        $page = max(1, min($page, $totalPages ?: 1));
+        $offset = ($page - 1) * $perPage;
+        
+        // Get paginated results
+        $paginatedQuery = $baseQuery . " LIMIT :limit OFFSET :offset";
+        $stmt = $this->db->prepare($paginatedQuery);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        
+        $stmt->execute();
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $flashcards = array_map(fn($data) => Flashcard::fromArray($data), $results);
+        
+        return [
+            'data' => $flashcards,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_pages' => $totalPages
+        ];
+    }
+    
+    /**
+     * Get total count of flashcards
+     */
+    public function count(?string $difficulty = null): int
+    {
+        if ($difficulty) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM flashcards WHERE difficulty = :difficulty");
+            $stmt->execute(['difficulty' => $difficulty]);
+        } else {
+            $stmt = $this->db->query("SELECT COUNT(*) as total FROM flashcards");
+        }
+        
+        return (int) $stmt->fetchColumn();
+    }
+    
+    /**
      * Check if flashcard exists
      */
     public function exists(int $id): bool

@@ -216,4 +216,65 @@ class FlashcardServiceTest extends TestCase
         $this->assertContains('medium', $difficulties);
         $this->assertContains('hard', $difficulties);
     }
+    
+    public function testGetAllFlashcardsPaginatedReturnsCorrectStructure(): void
+    {
+        $mockRepo = $this->createRepositoryMock();
+        $mockRepo->expects($this->once())
+            ->method('findAllPaginated')
+            ->with(1, 10, null, null)
+            ->willReturn([
+                'data' => [
+                    new Flashcard(1, 'Q1', 'A1', 'easy', 1, null, '2025-10-01', '2025-10-01'),
+                    new Flashcard(2, 'Q2', 'A2', 'hard', 1, null, '2025-10-01', '2025-10-01'),
+                ],
+                'total' => 2,
+                'page' => 1,
+                'per_page' => 10,
+                'total_pages' => 1
+            ]);
+        
+        $service = new FlashcardService($mockRepo);
+        $result = $service->getAllFlashcardsPaginated(1, 10);
+        
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('total', $result);
+        $this->assertArrayHasKey('page', $result);
+        $this->assertArrayHasKey('per_page', $result);
+        $this->assertArrayHasKey('total_pages', $result);
+        
+        $this->assertCount(2, $result['data']);
+        $this->assertEquals(2, $result['total']);
+        $this->assertEquals(1, $result['page']);
+    }
+    
+    public function testGetAllFlashcardsPaginatedThrowsExceptionForInvalidPage(): void
+    {
+        $mockRepo = $this->createRepositoryMock();
+        $service = new FlashcardService($mockRepo);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Page must be greater than 0');
+        $service->getAllFlashcardsPaginated(0, 10);
+    }
+    
+    public function testGetAllFlashcardsPaginatedThrowsExceptionForInvalidPerPage(): void
+    {
+        $mockRepo = $this->createRepositoryMock();
+        $service = new FlashcardService($mockRepo);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Per page must be between 1 and 100');
+        $service->getAllFlashcardsPaginated(1, 101);
+    }
+    
+    public function testGetAllFlashcardsPaginatedValidatesDifficulty(): void
+    {
+        $mockRepo = $this->createRepositoryMock();
+        $service = new FlashcardService($mockRepo);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $service->getAllFlashcardsPaginated(1, 10, null, 'invalid');
+    }
 }

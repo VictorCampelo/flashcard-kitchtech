@@ -182,4 +182,101 @@ class FlashcardRepositoryTest extends DatabaseTestCase
     {
         $this->assertFalse($this->repository->exists(999));
     }
+    
+    public function testFindAllPaginatedReturnsCorrectStructure(): void
+    {
+        // Create test data
+        for ($i = 1; $i <= 15; $i++) {
+            $this->repository->create(['front' => "Q$i", 'back' => "A$i"]);
+        }
+        
+        $result = $this->repository->findAllPaginated(1, 10);
+        
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('total', $result);
+        $this->assertArrayHasKey('page', $result);
+        $this->assertArrayHasKey('per_page', $result);
+        $this->assertArrayHasKey('total_pages', $result);
+        
+        $this->assertCount(10, $result['data']);
+        $this->assertEquals(15, $result['total']);
+        $this->assertEquals(1, $result['page']);
+        $this->assertEquals(10, $result['per_page']);
+        $this->assertEquals(2, $result['total_pages']);
+    }
+    
+    public function testFindAllPaginatedReturnsSecondPage(): void
+    {
+        // Create test data
+        for ($i = 1; $i <= 15; $i++) {
+            $this->repository->create(['front' => "Q$i", 'back' => "A$i"]);
+        }
+        
+        $result = $this->repository->findAllPaginated(2, 10);
+        
+        $this->assertCount(5, $result['data']);
+        $this->assertEquals(2, $result['page']);
+        $this->assertEquals(15, $result['total']);
+    }
+    
+    public function testFindAllPaginatedWithDifficultyFilter(): void
+    {
+        $card1 = $this->repository->create(['front' => 'Q1', 'back' => 'A1']);
+        $this->repository->updateDifficulty($card1->id, 'easy');
+        
+        $card2 = $this->repository->create(['front' => 'Q2', 'back' => 'A2']);
+        $this->repository->updateDifficulty($card2->id, 'easy');
+        
+        $this->repository->create(['front' => 'Q3', 'back' => 'A3']);
+        
+        $result = $this->repository->findAllPaginated(1, 10, null, 'easy');
+        
+        $this->assertCount(2, $result['data']);
+        $this->assertEquals(2, $result['total']);
+    }
+    
+    public function testFindAllPaginatedWithStudyFilter(): void
+    {
+        $notStudied = $this->repository->create(['front' => 'Not Studied', 'back' => 'A']);
+        
+        $hard = $this->repository->create(['front' => 'Hard', 'back' => 'A']);
+        $this->repository->updateDifficulty($hard->id, 'hard');
+        
+        $easy = $this->repository->create(['front' => 'Easy', 'back' => 'A']);
+        $this->repository->updateDifficulty($easy->id, 'easy');
+        
+        $result = $this->repository->findAllPaginated(1, 10, 'study');
+        
+        // Should be ordered: not_studied, hard, easy
+        $this->assertEquals('Not Studied', $result['data'][0]->front);
+        $this->assertEquals('Hard', $result['data'][1]->front);
+        $this->assertEquals('Easy', $result['data'][2]->front);
+    }
+    
+    public function testCountReturnsCorrectTotal(): void
+    {
+        $this->repository->create(['front' => 'Q1', 'back' => 'A1']);
+        $this->repository->create(['front' => 'Q2', 'back' => 'A2']);
+        $this->repository->create(['front' => 'Q3', 'back' => 'A3']);
+        
+        $count = $this->repository->count();
+        
+        $this->assertEquals(3, $count);
+    }
+    
+    public function testCountWithDifficultyFilter(): void
+    {
+        $card1 = $this->repository->create(['front' => 'Q1', 'back' => 'A1']);
+        $this->repository->updateDifficulty($card1->id, 'easy');
+        
+        $card2 = $this->repository->create(['front' => 'Q2', 'back' => 'A2']);
+        $this->repository->updateDifficulty($card2->id, 'easy');
+        
+        $this->repository->create(['front' => 'Q3', 'back' => 'A3']);
+        
+        $count = $this->repository->count('easy');
+        
+        $this->assertEquals(2, $count);
+    }
 }

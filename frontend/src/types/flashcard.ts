@@ -28,7 +28,20 @@ export interface UpdateFlashcardDTO {
 export interface FlashcardListResponse {
   success: boolean;
   data: Flashcard[];
-  count: number;
+  count?: number; // Deprecated, use pagination metadata
+  total?: number;
+  page?: number;
+  per_page?: number;
+  total_pages?: number;
+}
+
+export interface PaginatedFlashcardResponse {
+  success: boolean;
+  data: Flashcard[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
 }
 
 export interface FlashcardResponse {
