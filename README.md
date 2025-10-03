@@ -246,16 +246,69 @@ docker-compose exec backend bash scripts/setup-test-db.sh
 
 ```
 flashcard-app/
-├── backend/              # PHP backend
-│   ├── public/          # Public web root
-│   ├── migrations/      # Database migrations
-│   ├── seeders/         # Database seeders
-│   └── tests/           # PHPUnit tests
-├── frontend/            # React frontend
-│   ├── src/            # Source code
-│   ├── e2e/            # Playwright E2E tests
-│   └── public/         # Static assets
-└── docker-compose.yml  # Docker orchestration
+├── backend/                    # PHP Backend (Custom MVC)
+│   ├── public/                # Public web root
+│   │   └── index.php         # Application entry point
+│   ├── src/                   # Source code
+│   │   ├── Config/           # Configuration files
+│   │   ├── Controllers/      # HTTP Controllers
+│   │   ├── Core/             # Core framework classes
+│   │   ├── Database/         # Database connection & utilities
+│   │   ├── Helpers/          # Helper functions
+│   │   ├── Models/           # Data models
+│   │   ├── Repositories/     # Data access layer
+│   │   ├── Routes/           # Route definitions
+│   │   └── Services/         # Business logic layer
+│   ├── migrations/            # Database migrations
+│   ├── seeders/              # Database seeders
+│   ├── scripts/              # Utility scripts
+│   ├── tests/                # PHPUnit tests
+│   │   ├── Unit/            # Unit tests
+│   │   └── Feature/         # Integration/API tests
+│   ├── vendor/               # Composer dependencies
+│   ├── .env.example          # Environment variables template
+│   ├── composer.json         # PHP dependencies
+│   ├── phpunit.xml          # PHPUnit configuration
+│   └── Dockerfile           # Backend Docker image
+│
+├── frontend/                  # React Frontend (TypeScript + Vite)
+│   ├── src/                  # Source code
+│   │   ├── components/      # React components
+│   │   │   ├── BottomBar/   # Bottom navigation bar
+│   │   │   ├── FlashcardForm/ # Create/Edit form
+│   │   │   ├── FlashcardList/ # Flashcard list display
+│   │   │   ├── Layout/      # App layout wrapper
+│   │   │   ├── Modal/       # Modal component
+│   │   │   ├── Pagination/  # Pagination controls
+│   │   │   └── Sidebar/     # Sidebar navigation
+│   │   ├── contexts/        # React Context providers
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── pages/           # Page components
+│   │   ├── services/        # API service layer
+│   │   ├── types/           # TypeScript type definitions
+│   │   ├── utils/           # Utility functions
+│   │   ├── constants/       # App constants
+│   │   ├── test/            # Test utilities
+│   │   ├── App.tsx          # Main App component
+│   │   └── main.tsx         # Application entry point
+│   ├── e2e/                  # Playwright E2E tests
+│   ├── public/               # Static assets
+│   ├── dist/                 # Production build output
+│   ├── node_modules/         # NPM dependencies
+│   ├── .env.example          # Environment variables template
+│   ├── package.json          # NPM dependencies & scripts
+│   ├── vite.config.ts        # Vite configuration
+│   ├── vitest.config.ts      # Vitest test configuration
+│   ├── playwright.config.ts  # Playwright E2E configuration
+│   ├── tsconfig.json         # TypeScript configuration
+│   ├── Dockerfile.dev        # Development Docker image
+│   └── Dockerfile.prod       # Production Docker image
+│
+├── docs/                      # Documentation files
+├── .git/                      # Git repository
+├── .gitignore                # Git ignore rules
+├── docker-compose.yml        # Docker orchestration
+└── README.md                 # This file
 ```
 
 ## Features
