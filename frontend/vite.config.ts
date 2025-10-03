@@ -16,6 +16,14 @@ export default defineConfig({
     strictPort: true,
     host: true,
     cors: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      'flashcard.rhyffy.online',
+      'flashcard.rhyffy.com',
+      'www.flashcard.rhyffy.online',
+      'www.flashcard.rhyffy.com'
+    ],
     watch: {
       usePolling: true,
     },
