@@ -2,12 +2,15 @@
 
 A full-stack flashcard application with spaced repetition learning system.
 
+🌐 **Live Demo**: [https://flashcard.rhyffy.online](https://flashcard.rhyffy.online)
+
 ## Tech Stack
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: PHP (Custom MVC Framework)
 - **Database**: MySQL 8.0
 - **Containerization**: Docker + Docker Compose
+- **Deployment**: Nginx + Ubuntu Server
 
 ## Quick Start
 
@@ -259,15 +262,17 @@ flashcard-app/
 
 - ✅ Create, edit, and delete flashcards
 - ✅ Spaced repetition learning algorithm
+- ✅ **Pagination** - Efficient data loading with customizable page sizes
 - ✅ Progress tracking
 - ✅ Responsive design
-- ✅ RESTful API
+- ✅ RESTful API with pagination support
 - ✅ Docker containerization
-- ✅ Unit and E2E testing
+- ✅ Unit and E2E testing (260+ tests)
 - ✅ Database migrations with rollback support
 - ✅ Database seeding for development
 - ✅ Hot-reload development mode
 - ✅ Production-ready builds
+- ✅ Nginx reverse proxy for production
 
 ## Testing
 
@@ -308,10 +313,11 @@ The test database is automatically created via the Docker entrypoint script:
 The frontend includes Vitest unit tests and Playwright E2E tests with **100% passing rate**:
 
 **Test Coverage:**
-- ✅ **161 unit tests** passing (Vitest)
+- ✅ **204 unit tests** passing (Vitest)
 - ✅ **13 E2E tests** passing (Playwright)
 - ✅ Component testing with React Testing Library
 - ✅ Service layer and custom hooks testing
+- ✅ Pagination component with 32 comprehensive tests
 - ✅ Complete user workflow testing
 
 **Unit Tests** (Vitest):
@@ -356,9 +362,9 @@ docker-compose exec frontend npm run test:e2e home.spec.ts
 **Test Results Summary:**
 ```
 Backend:  43/43 tests passing ✅
-Frontend: 161/161 unit tests passing ✅
+Frontend: 204/204 unit tests passing ✅
 E2E:      13/13 tests passing ✅
-Total:    217/217 tests passing ✅
+Total:    260/260 tests passing ✅
 ```
 
 ## API Documentation
@@ -366,7 +372,9 @@ Total:    217/217 tests passing ✅
 The backend provides a RESTful API with the following endpoints:
 
 **CRUD Operations:**
-- `GET /api/flashcards` - List all flashcards
+- `GET /api/flashcards` - List all flashcards (with pagination)
+  - Query params: `?page=1&per_page=10` (default: page=1, per_page=10, max: 100)
+  - Filters: `?filter=study` or `?difficulty=easy|medium|hard|not_studied`
 - `GET /api/flashcards/{id}` - Get single flashcard
 - `POST /api/flashcards` - Create flashcard
 - `PUT /api/flashcards/{id}` - Update flashcard
@@ -377,8 +385,32 @@ The backend provides a RESTful API with the following endpoints:
 - `GET /api/study/stats` - Get study statistics
 - `PATCH /api/study/flashcards/{id}/difficulty` - Update difficulty
 
-**Filters:**
-- `GET /api/flashcards/filter/difficulty/{difficulty}` - Filter by difficulty
+**Pagination Examples:**
+```bash
+# Get first page with 10 items
+curl http://localhost:8000/api/flashcards?page=1&per_page=10
+
+# Get second page with 20 items
+curl http://localhost:8000/api/flashcards?page=2&per_page=20
+
+# Get easy flashcards with pagination
+curl http://localhost:8000/api/flashcards?difficulty=easy&page=1&per_page=10
+
+# Get study-prioritized flashcards with pagination
+curl http://localhost:8000/api/flashcards?filter=study&page=1&per_page=10
+```
+
+**Pagination Response Format:**
+```json
+{
+  "success": true,
+  "data": [...],
+  "total": 50,
+  "page": 1,
+  "per_page": 10,
+  "total_pages": 5
+}
+```
 
 For complete API documentation, see [`backend/API_ROUTES.md`](backend/API_ROUTES.md)
 
@@ -534,6 +566,137 @@ With additional time, the following features and enhancements could be implement
 - 🧹 **Code Cleanup**: Refactor duplicated code, improve naming conventions
 - 📦 **Dependency Updates**: Keep dependencies up-to-date and secure
 
+## Production Deployment
+
+### Live Application
+
+🌐 **Production URL**: [https://flashcard.rhyffy.online](https://flashcard.rhyffy.online)
+
+**Server Details:**
+- **OS**: Ubuntu Server
+- **Web Server**: Nginx (reverse proxy)
+- **SSL**: Let's Encrypt (Certbot)
+- **Domain**: flashcard.rhyffy.online (Hostinger DNS)
+
+### Deployment Architecture
+
+```
+Internet → Nginx (Port 80/443)
+           ↓
+           ├─→ Backend API (127.0.0.1:8000) → Docker Container
+           └─→ Frontend (127.0.0.1:5173) → Docker Container
+                                           ↓
+                                    MySQL (127.0.0.1:3306) → Docker Container
+```
+
+### Deployment Steps
+
+1. **Configure DNS in Hostinger**
+   - Add A record: `@` → `SERVER IP`
+   - Add A record: `www` → `SERVER IP`
+   - Wait 24-48 hours for DNS propagation
+
+2. **Install Nginx on Ubuntu Server**
+   ```bash
+   sudo apt update && sudo apt install nginx
+   ```
+
+3. **Configure Nginx**
+   ```bash
+   sudo nano /etc/nginx/sites-available/flashcard-app
+   ```
+   
+   Add configuration:
+   ```nginx
+   upstream backend_api {
+       server 127.0.0.1:8000;
+       keepalive 32;
+   }
+
+   upstream frontend_dev {
+       server 127.0.0.1:5173;
+       keepalive 32;
+   }
+
+   server {
+       listen 80;
+       server_name www.flashcard.rhyffy.online;
+       return 301 https://flashcard.rhyffy.online$request_uri;
+   }
+
+   server {
+       listen 80;
+       server_name flashcard.rhyffy.online;
+
+       location /api/ {
+           proxy_pass http://backend_api/api/;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+
+       location / {
+           proxy_pass http://frontend_dev;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   ```
+
+4. **Enable Nginx Configuration**
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/flashcard-app /etc/nginx/sites-enabled/
+   sudo rm /etc/nginx/sites-enabled/default
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
+
+5. **Install SSL Certificate**
+   ```bash
+   sudo apt install certbot python3-certbot-nginx
+   sudo certbot --nginx -d flashcard.rhyffy.online -d www.flashcard.rhyffy.online
+   ```
+
+6. **Start Docker Containers**
+   ```bash
+   cd ~/flashcard-kitchtech
+   docker-compose up -d
+   ```
+
+7. **Verify Deployment**
+   ```bash
+   # Test DNS
+   nslookup flashcard.rhyffy.online
+   
+   # Test application
+   curl https://flashcard.rhyffy.online
+   
+   # Check containers
+   docker-compose ps
+   ```
+
+### Monitoring & Maintenance
+
+```bash
+# View application logs
+docker-compose logs -f
+
+# Check Nginx logs
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+
+# Restart services
+docker-compose restart
+sudo systemctl restart nginx
+
+# Update application
+git pull
+docker-compose up -d --build
+```
+
 ## Troubleshooting
 
 ### Backend won't start
@@ -578,12 +741,6 @@ ports:
   - "8001:80"    # Backend
   - "5174:5173"  # Frontend
 ```
-
-## Additional Documentation
-
-- **Backend Documentation**: [`backend/README.md`](backend/README.md)
-- **API Routes**: [`backend/API_ROUTES.md`](backend/API_ROUTES.md)
-- **Frontend Documentation**: [`frontend/README.md`](frontend/README.md) (if exists)
 
 ## Author
 
